@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Касса">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1115">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Касса</title>
+<style>
+  :root{ --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2b3038; --txt:#e8eaed; --muted:#8b919c; --accent:#3ddc84; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+  html,body{ height:100%; background:var(--bg); }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--txt); overflow:hidden; }
+
+  #frame{ position:fixed; inset:0; width:100%; height:100%; border:0; display:none; background:var(--bg); }
+
+  #splash{
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:calc(env(safe-area-inset-top) + 40px) 28px calc(env(safe-area-inset-bottom) + 36px);
+    background:var(--bg);
+  }
+  .logo{
+    width:96px; height:96px; margin-bottom:28px; background:var(--card);
+    border:1px solid var(--line); border-radius:24px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .logo .m{ font-size:42px; font-weight:800; color:var(--accent); line-height:1; }
+  .logo .sep{ width:46px; height:2px; background:var(--line); margin:6px 0; }
+  .logo .n{ font-size:24px; font-weight:800; letter-spacing:2px; color:var(--txt); line-height:1; }
+
+  .title{ font-size:26px; font-weight:800; margin-bottom:6px; }
+  .subtitle{ font-size:13px; color:var(--muted); margin-bottom:34px; text-align:center; }
+
+  .btns{ display:flex; flex-direction:column; gap:12px; width:100%; max-width:244px; }
+  .lang-btn{ padding:15px; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; text-align:center; border:1px solid var(--line); transition:transform .1s; }
+  .lang-btn:active{ transform:scale(.97); }
+  .lang-btn.uz{ background:var(--accent); color:#06210f; border-color:var(--accent); }
+  .lang-btn.ru{ background:var(--card2); color:var(--txt); }
+
+  .loader{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:var(--bg); color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+
+  <div id="splash">
+    <div class="logo"><div class="m">M</div><div class="sep"></div><div class="n">007</div></div>
+    <div class="title">Касса</div>
+    <div class="subtitle">Тилни танланг · Выберите язык</div>
+    <div class="btns">
+      <div class="lang-btn uz" onclick="choose('uz')">Ўзбекча</div>
+      <div class="lang-btn ru" onclick="choose('ru')">Русский</div>
+    </div>
+  </div>
+
+  <div class="loader" id="loader">Юкланмоқда…</div>
+  <iframe id="frame" allow="clipboard-write; clipboard-read"></iframe>
+
+<script>
+  var APP_URL = 'https://script.google.com/macros/s/AKfycbwjuOoKLFPt0sO4PotLK4qkNI8AfoNCWCCoP0z_mwpsM0HiOfQ65f-h3jZzLahNN-ss/exec';
+  var LS_KEY = 'kassa_lang';
+
+  function openApp(lang){
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('loader').style.display = 'flex';
+    var frame = document.getElementById('frame');
+    frame.onload = function(){
+      document.getElementById('loader').style.display = 'none';
+      frame.style.display = 'block';
+    };
+    var url = APP_URL + (lang ? ('?lang=' + encodeURIComponent(lang)) : '');
+    frame.src = url;
+  }
+
+  function choose(lang){
+    try { localStorage.setItem(LS_KEY, lang); } catch(e){}
+    openApp(lang);
+  }
+
+  (function init(){
+    var saved = null;
+    try { saved = localStorage.getItem(LS_KEY); } catch(e){}
+    if (saved) { openApp(saved); }
+  })();
+</script>
+</body>
+</html>
