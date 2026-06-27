@@ -63,12 +63,18 @@
 
 <script>
   var APP_URL = 'https://script.google.com/macros/s/AKfycbwjuOoKLFPt0sO4PotLK4qkNI8AfoNCWCCoP0z_mwpsM0HiOfQ65f-h3jZzLahNN-ss/exec';
-  var LS_LANG = 'kassa_lang';
-  var LS_TOKEN = 'kassa_token';
 
-  function getSaved(key){ try { return localStorage.getItem(key); } catch(e){ return null; } }
-  function setSaved(key,val){ try { localStorage.setItem(key,val); } catch(e){} }
-  function delSaved(key){ try { localStorage.removeItem(key); } catch(e){} }
+  function setCookie(name, val, days){
+    var d = new Date(); d.setTime(d.getTime() + days*24*60*60*1000);
+    document.cookie = name + '=' + encodeURIComponent(val) + ';expires=' + d.toUTCString() + ';path=/;SameSite=None;Secure';
+  }
+  function getCookie(name){
+    var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function delCookie(name){
+    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=None;Secure';
+  }
 
   function openApp(lang){
     document.getElementById('splash').style.display = 'none';
@@ -81,37 +87,30 @@
     var url = APP_URL;
     var qs = [];
     if(lang) qs.push('lang=' + encodeURIComponent(lang));
-    var token = getSaved(LS_TOKEN);
+    var token = getCookie('kassa_token');
     if(token) qs.push('token=' + encodeURIComponent(token));
     if(qs.length) url += '?' + qs.join('&');
     frame.src = url;
   }
 
   function choose(lang){
-    setSaved(LS_LANG, lang);
+    setCookie('kassa_lang', lang, 365);
     openApp(lang);
   }
 
-  // приём сообщений из Apps Script (Login отдаёт токен, приложение просит выход)
   window.addEventListener('message', function(ev){
     var d = ev.data || {};
     if(d.type === 'kassa_token' && d.token){
-      setSaved(LS_TOKEN, d.token);
-      alert('Токен сохранён: ' + d.token.slice(0,20) + '...');
+      setCookie('kassa_token', d.token, 30);
     } else if(d.type === 'kassa_logout'){
-      delSaved(LS_TOKEN);
+      delCookie('kassa_token');
       location.reload();
     }
   });
 
   (function init(){
-    // тест: пишем и сразу читаем
-    var testWrite = 'ok_' + Date.now();
-    setSaved('kassa_test', testWrite);
-    var testRead = getSaved('kassa_test');
-    var lang = getSaved(LS_LANG);
-    var token = getSaved(LS_TOKEN);
-    alert('localStorage работает: ' + (testRead===testWrite ? 'ДА' : 'НЕТ') + '\nязык=' + (lang||'нет') + '\nтокен=' + (token?'есть':'НЕТ'));
+    var lang = getCookie('kassa_lang');
+    var token = getCookie('kassa_token');
     if(lang || token){ openApp(lang || 'uz'); }
   })();
 </script>
