@@ -97,6 +97,7 @@
     var d = ev.data || {};
     if(d.type === 'kassa_token' && d.token){
       setSaved(LS_TOKEN, d.token);
+      alert('Токен сохранён: ' + d.token.slice(0,20) + '...');
     } else if(d.type === 'kassa_logout'){
       delSaved(LS_TOKEN);
       location.reload();
@@ -106,7 +107,7 @@
   (function init(){
     var lang = getSaved(LS_LANG);
     var token = getSaved(LS_TOKEN);
-    // если есть язык ИЛИ токен — открываем приложение сразу (токен даст автологин)
+    alert('При запуске: язык=' + (lang||'нет') + ', токен=' + (token?token.slice(0,20)+'...':'НЕТ'));
     if(lang || token){ openApp(lang || 'uz'); }
   })();
 </script>
