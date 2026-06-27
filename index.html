@@ -105,9 +105,13 @@
   });
 
   (function init(){
+    // тест: пишем и сразу читаем
+    var testWrite = 'ok_' + Date.now();
+    setSaved('kassa_test', testWrite);
+    var testRead = getSaved('kassa_test');
     var lang = getSaved(LS_LANG);
     var token = getSaved(LS_TOKEN);
-    alert('При запуске: язык=' + (lang||'нет') + ', токен=' + (token?token.slice(0,20)+'...':'НЕТ'));
+    alert('localStorage работает: ' + (testRead===testWrite ? 'ДА' : 'НЕТ') + '\nязык=' + (lang||'нет') + '\nтокен=' + (token?'есть':'НЕТ'));
     if(lang || token){ openApp(lang || 'uz'); }
   })();
 </script>
