@@ -1365,9 +1365,9 @@
     }).catch(function(){ el.innerHTML='<div class="empty">Алоқа узилди</div>'; });
   }
   function dlDayKey(){
+    // день считаем по Москве (как сервер), чтобы лог и список совпадали
     var d=new Date(); if(dlDayVal==='yesterday') d=new Date(d.getTime()-86400000);
-    var z=function(n){return (n<10?'0':'')+n;};
-    return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());
+    return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(d);
   }
   function dlShowText(name, text, phone){
     var el=document.getElementById(dlBodyId(name));
