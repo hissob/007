@@ -261,7 +261,11 @@
       <div class="field"><label>Изоҳ</label><input type="text" id="mNote" placeholder="ихтиёрий"></div>
       <button class="submit" id="mSubmit" onclick="mSubmit()">Сақлаш</button>
     </div>
-    <div class="card feed"><h2>История (Москва) · 2 кун</h2>
+    <div class="card feed"><h2>История (Москва)</h2>
+      <div class="seg" style="margin-bottom:12px;">
+        <div class="seg-btn" id="mFeedToday" onclick="mFeedPeriod('today')">Бугун</div>
+        <div class="seg-btn" id="mFeedYesterday" onclick="mFeedPeriod('yesterday')">Кеча</div>
+      </div>
       <div id="mFeed"><div class="loading">Юкланмоқда…</div></div>
     </div>
   </div>
@@ -716,7 +720,6 @@
     mFeedPeriodVal=p;
     document.getElementById('mFeedToday').classList.toggle('sel',p==='today');
     document.getElementById('mFeedYesterday').classList.toggle('sel',p==='yesterday');
-    document.getElementById('mFeedWeek').classList.toggle('sel',p==='week');
     mRefreshFeed();
   }
   function mRefreshFeed(){apiCall('getMoscowFeed',{limit:50,period:mFeedPeriodVal},AUTH_TOKEN).then(mRenderFeed);}
