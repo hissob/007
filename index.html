@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
@@ -12,107 +12,1588 @@
 <link rel="apple-touch-icon" href="icon.svg">
 <title>Касса</title>
 <style>
-  :root{ --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2b3038; --txt:#e8eaed; --muted:#8b919c; --accent:#3ddc84; }
-  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
-  html{ height:100%; }
-  body{
-    height:100vh; height:100dvh;
-    display:flex; flex-direction:column;
-    background:var(--bg); color:var(--txt);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    overflow:hidden;
+  :root{
+    --bg:#0f1115; --card:#181b22; --card2:#1f232c; --line:#2b3038;
+    --txt:#e8eaed; --muted:#8b919c; --accent:#3ddc84; --accent-d:#2bb56b;
+    --plus:#3ddc84; --minus:#ff6b6b; --gold:#f0b429; --blue:#5b9dff; --purple:#b18cff; --r:14px;
   }
-  #frame{ flex:1 1 auto; width:100%; border:0; display:none; background:var(--bg); }
-  #splash{
-    flex:1 1 auto; display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    padding:calc(env(safe-area-inset-top) + 40px) 28px calc(env(safe-area-inset-bottom) + 36px);
-  }
-  .logo{
-    width:96px; height:96px; margin-bottom:28px; background:var(--card);
-    border:1px solid var(--line); border-radius:24px;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-  }
-  .logo .m{ font-size:42px; font-weight:800; color:var(--accent); line-height:1; }
-  .logo .sep{ width:46px; height:2px; background:var(--line); margin:6px 0; }
-  .logo .n{ font-size:24px; font-weight:800; letter-spacing:2px; color:var(--txt); line-height:1; }
-  .title{ font-size:26px; font-weight:800; margin-bottom:6px; }
-  .subtitle{ font-size:13px; color:var(--muted); margin-bottom:34px; text-align:center; }
-  .btns{ display:flex; flex-direction:column; gap:12px; width:100%; max-width:244px; }
-  .lang-btn{ padding:15px; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; text-align:center; border:1px solid var(--line); transition:transform .1s; }
-  .lang-btn:active{ transform:scale(.97); }
-  .lang-btn.uz{ background:var(--accent); color:#06210f; border-color:var(--accent); }
-  .lang-btn.ru{ background:var(--card2); color:var(--txt); }
-  #loader{ flex:1 1 auto; display:none; align-items:center; justify-content:center; color:var(--muted); font-size:14px; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; display:flex; justify-content:center;}
+  .app{width:100%; max-width:440px; padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 40px);}
+
+  .tabs{display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:2px;}
+  .tab{flex:0 0 auto; min-width:58px; padding:8px 10px 7px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; cursor:pointer; text-align:center; transition:.15s;}
+  .tab .l{font-size:20px; font-weight:800; line-height:1;}
+  .tab .c{font-size:10px; color:var(--muted); margin-top:3px; letter-spacing:.3px;}
+  .tab[data-s=moscow] .l{color:var(--plus);}
+  .tab[data-s=uzb] .l{color:var(--gold);}
+  .tab[data-s=region] .l{color:#e08a4f;}
+  .tab[data-s=req] .l{color:var(--blue);}
+  .tab[data-s=transfer] .l{color:var(--purple);}
+  .tab[data-s=admin] .l{color:var(--minus);}
+  .tab[data-s=reports] .l{color:#5bd6c2;}
+  .tab.sel{background:var(--card2);}
+  .tab.sel[data-s=moscow]{border-color:var(--plus);}
+  .tab.sel[data-s=uzb]{border-color:var(--gold);}
+  .tab.sel[data-s=region]{border-color:#e08a4f;}
+  .tab.sel[data-s=req]{border-color:var(--blue);}
+  .tab.sel[data-s=transfer]{border-color:var(--purple);}
+  .tab.sel[data-s=admin]{border-color:var(--minus);}
+  .tab.sel[data-s=reports]{border-color:#5bd6c2;}
+  .tab.sel .c{color:var(--txt);}
+
+  .head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .head h1{font-size:18px; margin:0; font-weight:700;}
+  .head .op{font-size:12px; color:var(--muted); margin-top:2px;}
+  .balance{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 12px; text-align:right; min-width:130px;}
+  .balance .lbl{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  .balance .rub{font-size:16px; font-weight:700;}
+  .balance .usd{font-size:13px; color:var(--muted);}
+  .balance .profit{font-size:12px; color:var(--plus); font-weight:600; margin-top:3px;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px; margin-bottom:14px;}
+  label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px 2px; letter-spacing:.3px;}
+  .field{margin-bottom:14px;}
+
+  .actions{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  .actions.two{grid-template-columns:1fr 1fr;}
+  .act-btn{padding:14px 6px; border:1px solid var(--line); background:var(--card2); color:var(--txt);
+    border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; transition:.15s; text-align:center;}
+  .act-btn small{display:block; font-size:10px; color:var(--muted); font-weight:400; margin-top:2px;}
+  .act-btn.sel.oldim{background:rgba(61,220,132,.15); border-color:var(--plus); color:var(--plus);}
+  .act-btn.sel.berdim{background:rgba(255,107,107,.15); border-color:var(--minus); color:var(--minus);}
+  .act-btn.sel.obmen{background:rgba(240,180,41,.15); border-color:var(--gold); color:var(--gold);}
+  .act-btn.sel small{color:inherit; opacity:.8;}
+
+  input[type=text], input[type=number], input[type=date], select{width:100%; padding:13px 12px; background:var(--card2);
+    border:1px solid var(--line); border-radius:10px; color:var(--txt); font-size:16px; outline:none;}
+  input:focus, select:focus{border-color:var(--accent);}
+  input::placeholder{color:#5b616c;}
+  input[readonly]{color:var(--gold); font-weight:600;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+
+  .ac-wrap{position:relative;}
+  .ac-list{position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--card2);
+    border:1px solid var(--line); border-radius:10px; overflow:hidden; z-index:20;
+    box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; max-height:260px; overflow-y:auto;}
+  .ac-list.open{display:block;}
+  .ac-item{padding:12px; font-size:15px; cursor:pointer; border-bottom:1px solid var(--line);}
+  .ac-item:last-child{border-bottom:none;}
+  .ac-item:hover{background:rgba(61,220,132,.12);}
+  .ac-item .reg{font-size:11px; color:var(--muted); margin-left:6px;}
+  .ac-item.add{color:var(--accent); font-weight:600;}
+  .ac-empty{padding:12px; font-size:13px; color:var(--muted);}
+
+  .usd-row{display:flex; align-items:center; justify-content:space-between; padding:12px;
+    background:var(--card2); border:1px solid var(--line); border-radius:10px;}
+  .usd-row span{font-size:14px;}
+  .switch{position:relative; width:48px; height:28px; flex:0 0 auto;}
+  .switch input{opacity:0; width:0; height:0;}
+  .slider{position:absolute; inset:0; background:var(--line); border-radius:28px; transition:.2s; cursor:pointer;}
+  .slider:before{content:""; position:absolute; height:22px; width:22px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+  .switch input:checked + .slider{background:var(--accent);}
+  .switch input:checked + .slider:before{transform:translateX(20px);}
+
+  .reg-tabs{display:flex; gap:8px; overflow-x:auto; padding-bottom:2px;}
+  .reg-tab{flex:0 0 auto; min-width:50px; padding:8px 10px 7px; background:var(--card2); border:1px solid var(--line);
+    border-radius:12px; cursor:pointer; text-align:center; transition:.15s;}
+  .reg-tab .l{font-size:18px; font-weight:800; line-height:1; color:#e08a4f;}
+  .reg-tab .c{font-size:10px; color:var(--muted); margin-top:3px; letter-spacing:.2px; white-space:nowrap;}
+  .reg-tab.sel{background:rgba(224,138,79,.15); border-color:#e08a4f;}
+  .reg-tab.sel .c{color:var(--txt);}
+  .reg-tab.add .l{color:var(--accent);}
+
+  .hidden{display:none;}
+
+  .exch{background:rgba(240,180,41,.06); border:1px solid rgba(240,180,41,.25); border-radius:12px; padding:14px; margin-top:4px;}
+  .dir-row{display:flex; gap:8px; margin-bottom:12px;}
+  .dir-btn{flex:1; padding:10px; text-align:center; border:1px solid var(--line); background:var(--card2);
+    border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; color:var(--muted);}
+  .dir-btn.sel{background:rgba(240,180,41,.15); border-color:var(--gold); color:var(--gold);}
+  .exch .row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .rate-box{margin-top:10px;}
+  .rate-box .calc{font-size:12px; color:var(--muted); margin-top:4px;}
+
+  .fact-hint{font-size:11px; color:var(--gold); margin-top:5px; line-height:1.3;}
+  .fact-hint .ed{color:var(--accent);}
+
+  .calc-box{background:rgba(240,180,41,.06); border:1px solid rgba(240,180,41,.25); border-radius:12px; padding:14px; margin-bottom:14px;}
+  .calc-row{display:flex; justify-content:space-between; font-size:13px; padding:4px 0; gap:8px;}
+  .calc-row span:first-child{color:var(--muted);}
+  .calc-row .v{font-weight:600; text-align:right;}
+  .calc-row .v.plus{color:var(--plus);} .calc-row .v.minus{color:var(--minus);} .calc-row .v.gold{color:var(--gold);}
+
+  .submit{width:100%; padding:16px; background:var(--accent); color:#06210f; border:none;
+    border-radius:12px; font-size:17px; font-weight:700; cursor:pointer; margin-top:4px;}
+  .submit:active{background:var(--accent-d);}
+  .submit:disabled{background:var(--line); color:var(--muted); cursor:not-allowed;}
+  .submit.purple{background:var(--purple); color:#1a0f2e;}
+
+  .ok-center{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:200; pointer-events:none;}
+  .ok-center.show{display:flex;}
+  .ok-card{background:rgba(24,40,30,.97); border:2px solid var(--accent); color:var(--accent);
+    border-radius:16px; padding:22px 26px; font-size:18px; font-weight:800; text-align:center;
+    box-shadow:0 12px 40px rgba(0,0,0,.6); animation:okPop .3s ease; max-width:80%;}
+  .ok-card .det{display:block; font-size:14px; font-weight:500; color:var(--txt); margin-top:8px;}
+  @keyframes okPop{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  .confirm-wrap{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:300; background:rgba(0,0,0,.6);}
+  .confirm-wrap.show{display:flex;}
+  .confirm-card{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px 24px; max-width:84%; text-align:center; box-shadow:0 16px 50px rgba(0,0,0,.7);}
+  .confirm-card .msg{font-size:19px; font-weight:700; line-height:1.4; margin-bottom:22px;}
+  .confirm-card .btns{display:flex; gap:12px;}
+  .confirm-card button{flex:1; padding:16px; border:none; border-radius:12px; font-size:17px; font-weight:800; cursor:pointer;}
+  .confirm-card .yes{background:var(--accent); color:#06210f;}
+  .confirm-card .no{background:var(--minus); color:#2a0808;}
+  .sum-title{font-size:16px; font-weight:800; margin-bottom:14px; text-align:center;}
+  .sum-rows{text-align:left; margin-bottom:20px;}
+  .sum-row{display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--line); font-size:15px;}
+  .sum-row:last-child{border-bottom:none;}
+  .sum-row .k{color:var(--muted);}
+  .sum-row .v{font-weight:700; text-align:right;}
+  .sum-row .v.plus{color:var(--plus);} .sum-row .v.minus{color:var(--minus);} .sum-row .v.gold{color:var(--gold);}
+  .feed h2{font-size:13px; color:var(--muted); margin:0 0 10px 2px; text-transform:uppercase; letter-spacing:.5px;}
+  .op-item{display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--line);}
+  .op-item:last-child{border-bottom:none;}
+  .op-left .nm{font-size:14px; font-weight:600;}
+  .op-left .mt{font-size:11px; color:var(--muted); margin-top:2px;}
+  .op-amt{font-size:15px; font-weight:700; text-align:right;}
+  .op-amt.plus{color:var(--plus);} .op-amt.minus{color:var(--minus);} .op-amt.gold{color:var(--gold);}
+  .op-amt .sub{display:block; font-size:11px; color:var(--muted); font-weight:400;}
+
+  .counter{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+  .cbox{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px;}
+  .cbox .lbl{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px;}
+  .cbox .val{font-size:18px; font-weight:700; margin-top:3px;}
+  .cbox.pending .val{color:var(--gold);}
+  .cbox .sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .sec-title{font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin:18px 2px 10px;}
+  .badge{display:inline-block; background:var(--gold); color:#1a1300; font-size:11px; font-weight:700; border-radius:20px; padding:1px 8px; margin-left:6px;}
+  .req{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:12px;}
+  .req.berdim{border-left:3px solid var(--minus);} .req.oldim{border-left:3px solid var(--plus);}
+  .req-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
+  .req-act{font-size:13px; font-weight:700; padding:3px 10px; border-radius:8px;}
+  .req-act.berdim{background:rgba(255,107,107,.15); color:var(--minus);}
+  .req-act.oldim{background:rgba(61,220,132,.15); color:var(--plus);}
+  .req-sum{font-size:22px; font-weight:800; text-align:right;}
+  .req-sum.berdim{color:var(--minus);} .req-sum.oldim{color:var(--plus);}
+  .req-line{display:flex; gap:8px; font-size:14px; padding:5px 0; border-top:1px solid var(--line);}
+  .req-line .k{color:var(--muted); min-width:64px;}
+  .req-line .v{font-weight:600;}
+  .phone-link{color:var(--blue); text-decoration:none; font-weight:700;}
+  .req-meta{font-size:11px; color:#5b616c; margin-top:6px;}
+  .req-btns{display:flex; gap:8px; margin-top:12px;}
+  .btn-done{flex:1; padding:13px; background:var(--accent); color:#06210f; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;}
+  .btn-done:disabled{background:var(--line); color:var(--muted);}
+  .btn-share{flex:0 0 auto; padding:13px 16px; background:var(--card2); color:var(--blue); border:1px solid var(--blue); border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;}
+  .done-item{display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--line); opacity:.65;}
+  .done-item:last-child{border-bottom:none;}
+  .done-left .nm{font-size:14px; font-weight:600;} .done-left .mt{font-size:11px; color:var(--muted); margin-top:2px;}
+  .done-amt{font-size:14px; font-weight:700;} .done-amt.oldim{color:var(--plus);} .done-amt.berdim{color:var(--minus);}
+  .check{color:var(--accent); font-size:12px; margin-left:6px;}
+  .empty{text-align:center; color:var(--muted); font-size:13px; padding:24px;}
+
+  .seg{display:flex; gap:8px; margin-bottom:14px;}
+  .seg-btn{flex:1; padding:12px; text-align:center; border:1px solid var(--line); background:var(--card2); border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; color:var(--muted);}
+  .seg-btn.sel.green{background:rgba(61,220,132,.15); border-color:var(--plus); color:var(--plus);}
+  .seg-btn.sel.red{background:rgba(255,107,107,.15); border-color:var(--minus); color:var(--minus);}
+  .sub-tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .sub-tab{flex:1; padding:10px; text-align:center; border:1px solid var(--line); background:var(--card); border-radius:10px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer;}
+  .sub-tab.sel{background:var(--card2); border-color:var(--minus); color:var(--txt);}
+  .cancel-item{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .cancel-item .info{font-size:13px;}
+  .cancel-item .info .t{font-weight:600;}
+  .cancel-item .info .m{font-size:11px; color:var(--muted); margin-top:2px;}
+  .btn-cancel{flex:0 0 auto; padding:9px 12px; background:rgba(255,107,107,.12); color:var(--minus); border:1px solid var(--minus); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;}
+  .date-row{display:flex; gap:8px; align-items:center; margin-bottom:12px;}
+  .date-row input{flex:1;}
+
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(80px);
+    background:#222; color:#fff; padding:12px 20px; border-radius:10px; font-size:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5); opacity:0; transition:.25s; z-index:100;}
+  .toast.show{transform:translateX(-50%) translateY(0); opacity:1;}
+  .toast.err{background:#5a1f1f; border:1px solid var(--minus);}
+  .refresh-fab{position:fixed; right:16px; bottom:16px; width:48px; height:48px; border-radius:50%;
+    background:var(--card2); border:1px solid var(--line); color:var(--accent); font-size:22px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:150;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);}
+  .refresh-fab:active{background:var(--card); transform:scale(.94);}
+  .loading{text-align:center; color:var(--muted); padding:20px; font-size:13px;}
 </style>
 </head>
 <body>
+<div class="app">
 
-  <div id="splash">
-    <div class="logo"><div class="m">M</div><div class="sep"></div><div class="n">007</div></div>
-    <div class="title">Касса</div>
-    <div class="subtitle">Тилни танланг · Выберите язык</div>
-    <div class="btns">
-      <div class="lang-btn uz" onclick="choose('uz')">Ўзбекча</div>
-      <div class="lang-btn ru" onclick="choose('ru')">Русский</div>
+  <div class="tabs" id="tabs"></div>
+
+  <!-- ====== МОСКВА ====== -->
+  <div class="screen" id="scr-moscow">
+    <div class="head">
+      <div><h1>Москва</h1><div class="op">Оператор: <span id="opName">…</span> · <span onclick="logout()" style="color:var(--minus);cursor:pointer;">Чиқиш</span></div></div>
+      <div class="balance"><div class="lbl">Касса</div><div class="rub" id="mskRub">…</div><div class="usd" id="mskUsd"></div></div>
+    </div>
+    <div class="card">
+      <div class="actions" style="margin-bottom:14px;">
+        <div class="act-btn oldim" onclick="mPick(this,'oldim')">Олдим <small>приход +</small></div>
+        <div class="act-btn berdim" onclick="mPick(this,'berdim')">Бердим <small>расход −</small></div>
+        <div class="act-btn obmen" onclick="mPick(this,'obmen')">Обмен <small>айирбошлаш</small></div>
+      </div>
+      <div class="field" id="mNameField"><label>Клиент</label>
+        <div class="ac-wrap"><input type="text" id="mName" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('mName','mAc')" onfocus="acInput('mName','mAc')"><div class="ac-list" id="mAc"></div></div>
+      </div>
+      <div class="field" id="mRubField"><label>Сумма ₽</label><input type="text" id="mRub" class="money" placeholder="0" inputmode="numeric"></div>
+      <div class="field" id="mUsdToggleField">
+        <div class="usd-row"><span>Доллар $ бор?</span><label class="switch"><input type="checkbox" id="mUsdSwitch" onchange="mToggleUsd()"><span class="slider"></span></label></div>
+      </div>
+      <div class="field hidden" id="mUsdField"><label>Доллар $</label><input type="text" id="mUsd" class="money" placeholder="0" inputmode="numeric"></div>
+      <div class="field hidden" id="mExchField">
+        <div class="exch">
+          <div class="dir-row"><div class="dir-btn sel" id="mDirUR" onclick="mDir('UR')">$ → ₽</div><div class="dir-btn" id="mDirRU" onclick="mDir('RU')">₽ → $</div></div>
+          <div class="row">
+            <div><label id="mExLbl1">Бердим $</label><input type="text" id="mExA" class="money" placeholder="0" inputmode="numeric" oninput="mCalcRate()"></div>
+            <div><label id="mExLbl2">Олдим ₽</label><input type="text" id="mExB" class="money" placeholder="0" inputmode="numeric" oninput="mCalcRate()"></div>
+          </div>
+          <div class="rate-box"><label>Курс</label><input type="text" id="mRate" placeholder="—" readonly><div class="calc" id="mRateCalc">Суммани киритинг — курс ўзи ҳисобланади</div></div>
+        </div>
+      </div>
+      <div class="field"><label>Изоҳ</label><input type="text" id="mNote" placeholder="ихтиёрий"></div>
+      <button class="submit" id="mSubmit" onclick="mSubmit()">Сақлаш</button>
+    </div>
+    <div class="card feed"><h2>История (Москва) · 2 кун</h2>
+      <div id="mFeed"><div class="loading">Юкланмоқда…</div></div>
     </div>
   </div>
 
-  <div id="loader">Юкланмоқда…</div>
-  <iframe id="frame" allow="clipboard-write; clipboard-read"></iframe>
+  <!-- ====== УЗБЕКИСТАН ====== -->
+  <div class="screen hidden" id="scr-uzb">
+    <div class="head">
+      <div><h1>Узбекистан</h1><div class="op">Оператор: <span id="opNameU">…</span></div></div>
+      <div class="balance"><div class="lbl">Қолдиқ</div><div class="rub" id="uBalUsd">…</div><div class="usd" id="uBalAvg"></div><div class="profit" id="uBalProfit"></div></div>
+    </div>
+    <div class="counter">
+      <div class="cbox"><div class="lbl">Қўлда</div><div class="val" id="uOnHand">…</div><div class="sub">$ қолдиқ</div></div>
+      <div class="cbox pending"><div class="lbl">Сделкаларда</div><div class="val" id="uPending">…</div><div class="sub" id="uPendCnt"></div></div>
+    </div>
+    <div class="card">
+      <div class="actions two" style="margin-bottom:14px;">
+        <div class="act-btn oldim" onclick="uPick(this,'oldim')">Олдим <small>сотиб олдим $</small></div>
+        <div class="act-btn berdim" onclick="uPick(this,'berdim')">Бердим <small>сотдим $</small></div>
+      </div>
+      <div class="field"><label>Клиент</label>
+        <div class="ac-wrap"><input type="text" id="uName" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('uName','uAc')" onfocus="acInput('uName','uAc')"><div class="ac-list" id="uAc"></div></div>
+      </div>
+      <div class="field"><label>Кимга</label><input type="text" id="uToWhom" placeholder="ихтиёрий"></div>
+      <div class="field"><label>Телефон</label><input type="text" id="uPhone" placeholder="+998 90 123 45 67"></div>
+      <div class="field"><label>Изоҳ</label><input type="text" id="uMemo" placeholder="ихтиёрий"></div>
+      <div class="row2">
+        <div class="field"><label>Доллар $</label><input type="text" id="uUsd" class="money" placeholder="0" inputmode="numeric" oninput="uCalc()"></div>
+        <div class="field"><label>Курс</label><input type="text" id="uRate" placeholder="0" inputmode="decimal" oninput="uCalc()"></div>
+      </div>
+      <div class="field"><label>Рубль (фактик)</label><input type="text" id="uRub" class="money" placeholder="0" inputmode="numeric" oninput="uRubEdit()"><div class="fact-hint" id="uHint">Доллар ва курсни киритинг — рубль таклиф этилади.</div></div>
+      <div class="calc-box"><div id="uCalcBox" style="font-size:13px;color:var(--muted)">Амал танланг, доллар ва курс киритинг</div></div>
+      <button class="submit" id="uSubmit" onclick="uSubmit()">Сделка яратиш</button>
+    </div>
+    <div class="card feed"><h2>История (Узбекистан) · 2 кун</h2>
+      <div id="uFeed"><div class="loading">Юкланмоқда…</div></div>
+    </div>
+    <div class="card"><div class="sec-title" style="margin-top:0;">Бу ҳудуд сделкалари</div><div id="uReqList"><div class="loading">Юкланмоқда…</div></div></div>
+  </div>
 
+  <!-- ====== РЕГИОНЫ ====== -->
+  <div class="screen hidden" id="scr-region">
+    <div class="head">
+      <div><h1>Ҳудудлар</h1><div class="op">Оператор: <span id="opNameG">…</span></div></div>
+      <div class="balance"><div class="lbl">Қолдиқ</div><div class="rub" id="gBalUsd">…</div><div class="usd" id="gBalAvg"></div><div class="profit" id="gBalProfit"></div></div>
+    </div>
+    <div class="counter">
+      <div class="cbox"><div class="lbl">Қўлда</div><div class="val" id="gOnHand">…</div><div class="sub">$ қолдиқ</div></div>
+      <div class="cbox pending"><div class="lbl">Сделкаларда</div><div class="val" id="gPending">…</div><div class="sub" id="gPendCnt"></div></div>
+    </div>
+    <div class="card">
+      <div class="field"><label>Ҳудуд (регион)</label>
+        <div class="reg-tabs" id="gRegionTabs"></div>
+      </div>
+      <div class="actions two" style="margin-bottom:14px;">
+        <div class="act-btn oldim" onclick="gPick(this,'oldim')">Олдим <small>сотиб олдим $</small></div>
+        <div class="act-btn berdim" onclick="gPick(this,'berdim')">Бердим <small>сотдим $</small></div>
+      </div>
+      <div class="field"><label>Клиент</label>
+        <div class="ac-wrap"><input type="text" id="gName" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('gName','gAc')" onfocus="acInput('gName','gAc')"><div class="ac-list" id="gAc"></div></div>
+      </div>
+      <div class="field"><label>Кимга</label><input type="text" id="gToWhom" placeholder="ихтиёрий"></div>
+      <div class="field"><label>Телефон</label><input type="text" id="gPhone" placeholder="телефон"></div>
+      <div class="field"><label>Изоҳ</label><input type="text" id="gMemo" placeholder="ихтиёрий"></div>
+      <div class="row2">
+        <div class="field"><label>Доллар $</label><input type="text" id="gUsdIn" class="money" placeholder="0" inputmode="numeric" oninput="gCalc()"></div>
+        <div class="field"><label>Курс</label><input type="text" id="gRate" placeholder="0" inputmode="decimal" oninput="gCalc()"></div>
+      </div>
+      <div class="field"><label>Рубль (фактик)</label><input type="text" id="gRub" class="money" placeholder="0" inputmode="numeric" oninput="gRubEdit()"><div class="fact-hint" id="gHint">Доллар ва курсни киритинг — рубль таклиф этилади.</div></div>
+      <div class="calc-box"><div id="gCalcBox" style="font-size:13px;color:var(--muted)">Амал танланг, доллар ва курс киритинг</div></div>
+      <button class="submit" id="gSubmit" onclick="gSubmit()">Сделка яратиш</button>
+    </div>
+    <div class="card feed"><h2>История · 2 кун</h2>
+      <div id="gFeed"><div class="loading">Юкланмоқда…</div></div>
+    </div>
+    <div class="card"><div class="sec-title" style="margin-top:0;">Бу ҳудуд сделкалари</div><div id="gReqList"><div class="loading">Юкланмоқда…</div></div></div>
+  </div>
+
+  <!-- ====== СДЕЛКИ (оператор 3) ====== -->
+  <div class="screen hidden" id="scr-req">
+    <div class="head"><div><h1>Сделки</h1><div class="op">Оператор: <span id="opNameR">…</span></div></div></div>
+    <div class="counter">
+      <div class="cbox"><div class="lbl">Қўлда</div><div class="val" id="rOnHand">…</div><div class="sub">$ қолдиқ</div></div>
+      <div class="cbox pending"><div class="lbl">Сделкаларда</div><div class="val" id="rPending">…</div><div class="sub" id="rPendCnt"></div></div>
+    </div>
+    <div class="sec-title">Фаол <span class="badge" id="rActiveCnt">0</span></div>
+    <div id="rActiveList"><div class="loading">Юкланмоқда…</div></div>
+    <div class="sec-title">Бажарилган</div>
+    <div id="rDoneList"></div>
+  </div>
+
+  <!-- ====== ПЕРЕВОДЫ ====== -->
+  <div class="screen hidden" id="scr-transfer">
+    <div class="head"><div><h1>Переводы долга</h1><div class="op">Только администратор</div></div></div>
+    <div class="card">
+      <div class="field"><label>С кого снять долг (станет Хакдор +)</label>
+        <div class="ac-wrap"><input type="text" id="tFrom" placeholder="клиент..." autocomplete="off" oninput="acInput('tFrom','tFromAc')" onfocus="acInput('tFrom','tFromAc')"><div class="ac-list" id="tFromAc"></div></div>
+      </div>
+      <div class="field"><label>На кого повесить (станет Карздор −)</label>
+        <div class="ac-wrap"><input type="text" id="tTo" placeholder="клиент..." autocomplete="off" oninput="acInput('tTo','tToAc')" onfocus="acInput('tTo','tToAc')"><div class="ac-list" id="tToAc"></div></div>
+      </div>
+      <div class="field"><label>Сумма ₽</label><input type="text" id="tSum" class="money" placeholder="0" inputmode="numeric"></div>
+      <div class="field"><label>Комментарий</label><input type="text" id="tNote" placeholder="необязательно"></div>
+      <button class="submit purple" id="tSubmit" onclick="tSubmit()">Выполнить перевод</button>
+    </div>
+    <div class="card feed"><h2>История переводов</h2><div id="tFeed"><div class="loading">Загрузка…</div></div></div>
+  </div>
+
+  <!-- ====== ПРАВКИ ====== -->
+  <div class="screen hidden" id="scr-admin">
+    <div class="head"><div><h1>Правки и сервис</h1><div class="op">Только администратор</div></div></div>
+    <div class="sub-tabs">
+      <div class="sub-tab sel" id="stab-cancel" onclick="aTab('cancel')">Отмена</div>
+      <div class="sub-tab" id="stab-start" onclick="aTab('start')">Остатки</div>
+      <div class="sub-tab" id="stab-recalc" onclick="aTab('recalc')">Пересчёт</div>
+    </div>
+    <div id="aPane-cancel">
+      <div class="card">
+        <div class="row2" style="margin-bottom:10px;">
+          <div><label>С даты</label><input type="date" id="aDateFrom"></div>
+          <div><label>По дату</label><input type="date" id="aDateTo"></div>
+        </div>
+        <div class="field" style="margin-bottom:10px;"><label>Клиент</label>
+          <div class="ac-wrap"><input type="text" id="aName" placeholder="исм бўйича қидириш..." autocomplete="off" oninput="acInput('aName','aNameAc')" onfocus="acInput('aName','aNameAc')"><div class="ac-list" id="aNameAc"></div></div>
+        </div>
+        <div class="row2" style="margin-bottom:10px;">
+          <div><label>Действие</label>
+            <select id="aAction">
+              <option value="">Все</option>
+              <option value="Олдим">Олдим</option>
+              <option value="Бердим">Бердим</option>
+              <option value="Обмен">Обмен</option>
+              <option value="Перевод">Перевод</option>
+              <option value="Старт">Старт</option>
+            </select>
+          </div>
+          <div><label>Регион</label><select id="aRegion"><option value="">Все</option></select></div>
+        </div>
+        <div class="date-row">
+          <button class="btn-share" style="flex:1;padding:13px 14px;" onclick="aLoadCancel()">Фильтр</button>
+          <button class="btn-cancel" style="flex:1;padding:13px 14px;" onclick="aResetCancel()">Сброс</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin:10px 0;">«Отменить» — пометит отменённой, касса пересчитается.</div>
+        <div id="aCancelList"><div class="loading">Загрузка…</div></div>
+      </div>
+    </div>
+    <div id="aPane-start" class="hidden">
+      <div class="card">
+        <div class="field"><label>Клиент</label>
+          <div class="ac-wrap"><input type="text" id="sName" placeholder="клиент..." autocomplete="off" oninput="acInput('sName','sNameAc')" onfocus="acInput('sName','sNameAc')"><div class="ac-list" id="sNameAc"></div></div>
+        </div>
+        <div class="seg"><div class="seg-btn green sel" id="segHak" onclick="sType('hakdor')">Хакдор (+)</div><div class="seg-btn red" id="segKarz" onclick="sType('karzdor')">Карздор (−)</div></div>
+        <div class="field"><label>Сумма ₽</label><input type="text" id="sSum" class="money" placeholder="0" inputmode="numeric"></div>
+        <button class="submit" id="sSubmit" onclick="sSubmit()">Записать остаток</button>
+      </div>
+    </div>
+    <div id="aPane-recalc" class="hidden">
+      <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Аварийная кнопка. Пересчитывает кассы регионов из всех неотменённых операций.</div>
+        <button class="submit" id="rcSubmit" onclick="rcSubmit()">Пересчитать всё</button>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Месячный пересчёт прибыли по средневзвешенному курсу (Σруб/Σ$). Перезаписывает прибыль всех продаж и средний курс регионов. Используй для сверки с таблицей.</div>
+        <button class="submit purple" id="rcMonthSubmit" onclick="rcMonthSubmit()">Пересчитать прибыль (месяц)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen hidden" id="scr-reports">
+    <div class="head"><div><h1>Ҳисоботлар</h1><div class="op">Оператор: <span id="opNameRep">…</span></div></div></div>
+    <div class="sub-tabs" id="repSubTabs">
+      <div class="sub-tab sel" id="rtab-balance" onclick="repTab('balance')">Мижозлар баланси</div>
+      <div class="sub-tab" id="rtab-daily" onclick="repTab('daily')">Кунлик</div>
+      <div class="sub-tab" id="rtab-overview" onclick="repTab('overview')">Умумий ҳолат</div>
+    </div>
+    <div id="repPane-balance">
+      <div class="counter">
+        <div class="cbox"><div class="lbl">Сизга қарзимиз</div><div class="val" id="balTotalPlus" style="color:var(--plus)">…</div><div class="sub">ҳақдорлар</div></div>
+        <div class="cbox"><div class="lbl">Қарзингиз</div><div class="val" id="balTotalMinus" style="color:var(--minus)">…</div><div class="sub">қарздорлар</div></div>
+      </div>
+      <div class="field" style="position:relative;">
+        <input type="text" id="balSearch" placeholder="Исм бўйича қидириш..." autocomplete="off" oninput="balRender(); balClearToggle();" style="padding-right:40px;">
+        <div id="balClear" onclick="balClearSearch()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); width:26px; height:26px; border-radius:50%; background:var(--card); border:1px solid var(--line); color:var(--muted); align-items:center; justify-content:center; cursor:pointer; font-size:15px;">✕</div>
+      </div>
+      <div class="seg">
+        <div class="seg-btn sel" id="balfAll" onclick="balFilter('all')">Ҳаммаси</div>
+        <div class="seg-btn green" id="balfHak" onclick="balFilter('hak')">Ҳақдор</div>
+        <div class="seg-btn red" id="balfKarz" onclick="balFilter('karz')">Қарздор</div>
+      </div>
+      <div id="balList"><div class="loading">Юкланмоқда…</div></div>
+    </div>
+    <div id="repPane-client" class="hidden">
+      <div class="card">
+        <div class="field"><label>Мижоз</label>
+          <div class="ac-wrap"><input type="text" id="crName" placeholder="исм..." autocomplete="off" oninput="acInput('crName','crAc')" onfocus="acInput('crName','crAc')"><div class="ac-list" id="crAc"></div></div>
+        </div>
+        <div class="seg" style="margin-bottom:10px;">
+          <div class="seg-btn sel" id="crLangUz" onclick="crLang('uz')">Ўзбекча</div>
+          <div class="seg-btn" id="crLangRu" onclick="crLang('ru')">Русский</div>
+        </div>
+        <div class="seg" style="margin-bottom:12px;">
+          <div class="seg-btn green sel" id="crPerToday" onclick="crPeriod('today')">Бугун</div>
+          <div class="seg-btn" id="crPerRange" onclick="crPeriod('range')">Давр</div>
+          <div class="seg-btn" id="crPerAll" onclick="crPeriod('all')">Ҳаммаси</div>
+        </div>
+        <div class="row2 hidden" id="crRangeBox" style="margin-bottom:12px;">
+          <div><label>С даты</label><input type="date" id="crFrom"></div>
+          <div><label>По дату</label><input type="date" id="crTo"></div>
+        </div>
+        <button class="submit" id="crBtn" onclick="crBuild()">Тайёрлаш</button>
+      </div>
+      <div id="crResult"></div>
+    </div>
+
+    <div id="repPane-daily" class="hidden">
+      <div class="seg" style="margin-bottom:12px;">
+        <div class="seg-btn sel" id="dlToday" onclick="dlDay('today')">Бугун</div>
+        <div class="seg-btn" id="dlYesterday" onclick="dlDay('yesterday')">Кеча</div>
+      </div>
+      <div class="seg" style="margin-bottom:14px;">
+        <div class="seg-btn sel" id="dlLangUz" onclick="dlLang('uz')">Ўзбекча</div>
+        <div class="seg-btn" id="dlLangRu" onclick="dlLang('ru')">Русский</div>
+      </div>
+      <div id="dlList"><div class="loading">Юкланмоқда…</div></div>
+    </div>
+
+    <div id="repPane-overview" class="hidden">
+      <div id="ovBox"><div class="loading">Юкланмоқда…</div></div>
+    </div>
+  </div>
+
+  <!-- ====== ЭКРАН КЛИЕНТА (история по тапу) ====== -->
+  <div class="screen hidden" id="scr-client">
+    <div class="head" style="align-items:center;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div onclick="clientBack()" style="width:38px; height:38px; border-radius:10px; background:var(--card2); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:22px; cursor:pointer;">←</div>
+        <div><h1 id="clName" style="font-size:18px;">…</h1><div class="op" id="clPhone"></div></div>
+      </div>
+    </div>
+    <div class="balance" id="clBalCard" style="text-align:center; min-width:0; width:100%; margin-bottom:14px; padding:14px;">
+      <div class="lbl">Жорий қолдиқ</div>
+      <div class="rub" id="clBalance" style="font-size:26px;">…</div>
+      <div class="usd" id="clBalSub"></div>
+    </div>
+    <div class="seg" style="margin-bottom:14px;">
+      <div class="seg-btn sel" id="clPerAll" onclick="clPeriod('all')">Ҳаммаси</div>
+      <div class="seg-btn" id="clPerToday" onclick="clPeriod('today')">Бугун</div>
+      <div class="seg-btn" id="clPerRange" onclick="clPeriod('range')">Давр</div>
+    </div>
+    <div class="row2 hidden" id="clRangeBox" style="margin-bottom:14px;">
+      <div><label>С даты</label><input type="date" id="clFrom"></div>
+      <div><label>По дату</label><input type="date" id="clTo"></div>
+    </div>
+    <div class="sec-title" style="margin-top:0;">Сделкалар</div>
+    <div id="clOpsList"><div class="loading">Юкланмоқда…</div></div>
+    <button class="submit" id="clReportBtn" onclick="clBuildReport()" style="margin-top:14px;">Ҳисобот тайёрлаш (WhatsApp)</button>
+    <div id="clReportResult"></div>
+  </div>
+
+</div>
+
+<div class="ok-center" id="okCenter"><div class="ok-card" id="okCard"></div></div>
+<div class="confirm-wrap" id="confirmWrap"><div class="confirm-card"><div class="msg" id="confirmMsg"></div><div class="btns"><button class="yes" id="confirmYes"></button><button class="no" id="confirmNo"></button></div></div></div>
+<div class="confirm-wrap" id="summaryWrap"><div class="confirm-card"><div class="sum-title">Сделкани тасдиқланг</div><div class="sum-rows" id="summaryRows"></div><div class="btns"><button class="yes" id="summaryYes">Ҳа</button><button class="no" id="summaryNo">Йўқ</button></div></div></div>
+<div class="toast" id="toast"></div>
+<div class="refresh-fab" onclick="appReload()" title="Янгилаш">⟳</div>
 <script>
-  var APP_URL = 'https://script.google.com/macros/s/AKfycbwjuOoKLFPt0sO4PotLK4qkNI8AfoNCWCCoP0z_mwpsM0HiOfQ65f-h3jZzLahNN-ss/exec';
+  /* ===== КОНФИГ + ХЕЛПЕР apiCall ===== */
+  var API_URL='https://script.google.com/macros/s/AKfycbw9xLU2d0_38dbVl2v7afk2CKn0JaJcVbPICYFtqJzYEBUbuxVPICqf5P-71Pn2KGRGCA/exec';
+  function apiCall(action,args,token){
+    return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:action,token:token||'',args:args||{}})}).then(function(r){return r.json();})
+      .then(function(res){
+        if(res&&res.error==='Сессия недействительна'&&action!=='checkLogin'){ logout(); }
+        return res;
+      });
+  }
+  var AUTH_TOKEN=localStorage.getItem('kassa_token')||'';
+  var USER_ROLE=localStorage.getItem('kassa_role')||'';
+  var USER_NAME=localStorage.getItem('kassa_name')||'';
+  if(!AUTH_TOKEN){ location.href='login.html'; }
+  function logout(){
+    localStorage.removeItem('kassa_token');
+    localStorage.removeItem('kassa_role');
+    localStorage.removeItem('kassa_name');
+    location.href='login.html';
+  }
+  var DB=[];
+  ['opName','opNameU','opNameG','opNameR','opNameRep'].forEach(function(id){var e=document.getElementById(id); if(e)e.textContent=USER_NAME||'—';});
 
-  function setCookie(name, val, days){
-    var d = new Date(); d.setTime(d.getTime() + days*24*60*60*1000);
-    document.cookie = name + '=' + encodeURIComponent(val) + ';expires=' + d.toUTCString() + ';path=/;SameSite=None;Secure';
+  var TAB_LABELS={moscow:['М','Москва'],uzb:['У','Узбекистан'],region:['Ҳ','Ҳудудлар'],req:['С','Сделки'],transfer:['П','Переводы'],admin:['✎','Правки'],reports:['О','Отчёты']};
+  var TABS={
+    operator1:['moscow'],
+    operator2:['moscow','uzb','region','reports'],
+    operator3:['req'],
+    admin:['moscow','uzb','region','req','transfer','admin','reports'],
+    report:['reports']
+  };
+  function buildTabs(){
+    var list=TABS[USER_ROLE]||[]; var box=document.getElementById('tabs');
+    if(list.length<=1) box.style.display='none';
+    var html=''; list.forEach(function(s,i){ var L=TAB_LABELS[s]; html+='<div class="tab'+(i===0?' sel':'')+'" data-s="'+s+'" onclick="showScreen(\''+s+'\',this)"><div class="l">'+L[0]+'</div><div class="c">'+L[1]+'</div></div>'; });
+    box.innerHTML=html; if(list.length) showScreen(list[0]);
   }
-  function getCookie(name){
-    var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
-    return m ? decodeURIComponent(m[1]) : null;
-  }
-  function delCookie(name){
-    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=None;Secure';
+  function showScreen(name,el){
+    ['moscow','uzb','region','req','transfer','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
+    var cl=document.getElementById('scr-client'); if(cl) cl.classList.add('hidden');
+    var t=document.getElementById('scr-'+name); if(t)t.classList.remove('hidden');
+    if(el){document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('sel');}); el.classList.add('sel');}
+    if(name==='moscow'){mOpen();}
+    if(name==='uzb'){uOpen();}
+    if(name==='region'){gInitRegions();}
+    if(name==='req'){rRefresh();}
+    if(name==='admin'){aLoadCancel();}
+    if(name==='transfer'){tRefreshFeed();}
+    if(name==='reports'){repInit();}
   }
 
-  function openApp(lang){
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('loader').style.display = 'flex';
-    var frame = document.getElementById('frame');
-    frame.onload = function(){
-      document.getElementById('loader').style.display = 'none';
-      frame.style.display = 'block';
+  function moneyFormat(el){var d=el.value.replace(/\D/g,''); el.value=d?Number(d).toLocaleString('ru-RU'):'';}
+  function moneyVal(id){var el=document.getElementById(id); if(!el)return 0; var d=el.value.replace(/\D/g,''); return d?parseInt(d,10):0;}
+  document.addEventListener('input',function(e){ if(e.target.classList&&e.target.classList.contains('money')) moneyFormat(e.target); });
+
+  function acInput(inpId,listId){
+    var q=document.getElementById(inpId).value.trim().toLowerCase(); var list=document.getElementById(listId);
+    if(q.length<1){list.classList.remove('open'); list.innerHTML=''; return;}
+    var hits=DB.filter(function(c){return c.name.toLowerCase().indexOf(q)>-1;}).slice(0,8);
+    var html=''; hits.forEach(function(c){ html+='<div class="ac-item" data-n="'+esc(c.name)+'" onclick="acPick(\''+inpId+'\',\''+listId+'\',this)">'+esc(c.name)+'</div>'; });
+    if(hits.length===0) html+='<div class="ac-empty">Йўқ</div>';
+    html+='<div class="ac-item add" onclick="acAdd(\''+inpId+'\',\''+listId+'\')">+ Янги мижоз</div>';
+    list.innerHTML=html; list.classList.add('open');
+  }
+  function acPick(inpId,listId,el){document.getElementById(inpId).value=el.getAttribute('data-n'); document.getElementById(listId).classList.remove('open');}
+  function acAdd(inpId,listId){
+    var n=document.getElementById(inpId).value.trim(); document.getElementById(listId).classList.remove('open');
+    if(!n){toast('Аввал исм киритинг',true); return;}
+    askConfirm('Янги мижоз «'+n+'»?', function(){
+      apiCall('addClient',{name:n},AUTH_TOKEN).then(function(res){
+        if(res.ok){DB.push({name:res.name,phone:'',reg:''}); toast('Мижоз қўшилди');}
+        else if(res.exists){toast('Бундай мижоз бор');}
+        else toast(res.error||'Хато',true);
+      });
+    }, 'uz');
+  }
+
+  function fmt(n){n=Number(n)||0; return n.toLocaleString('ru-RU');}
+  function esc(s){return String(s).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c];});}
+  function appReload(){
+    var cur = document.querySelector('.tab.sel');
+    var name = cur ? cur.getAttribute('data-s') : null;
+    if(!name){
+      var vis = ['moscow','uzb','region','req','transfer','admin','reports'].filter(function(s){
+        var d=document.getElementById('scr-'+s); return d && !d.classList.contains('hidden');
+      });
+      name = vis[0] || 'moscow';
+    }
+    showScreen(name);
+    toast('Янгиланди');
+  }
+  function toast(msg,isErr){var t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'+(isErr?' err':''); setTimeout(function(){t.className='toast';},2500);}
+  function showOk(title,det){var c=document.getElementById('okCard'); c.innerHTML='✓ '+title+(det?'<span class="det">'+det+'</span>':''); var w=document.getElementById('okCenter'); w.className='ok-center show'; clearTimeout(w._t); w._t=setTimeout(function(){w.className='ok-center';},2500);}
+  var _confirmCb=null;
+  function askConfirm(msg, cb, lang){
+    document.getElementById('confirmMsg').textContent=msg;
+    document.getElementById('confirmYes').textContent = lang==='uz'?'Ҳа':'Да';
+    document.getElementById('confirmNo').textContent = lang==='uz'?'Йўқ':'Нет';
+    _confirmCb=cb; document.getElementById('confirmWrap').classList.add('show');
+  }
+  document.getElementById('confirmYes').onclick=function(){document.getElementById('confirmWrap').classList.remove('show'); if(_confirmCb){var f=_confirmCb;_confirmCb=null;f();}};
+  document.getElementById('confirmNo').onclick=function(){document.getElementById('confirmWrap').classList.remove('show'); _confirmCb=null;};
+  var _summaryCb=null;
+  function showSummary(rows, cb){
+    var h=''; rows.forEach(function(r){ h+='<div class="sum-row"><span class="k">'+r[0]+'</span><span class="v '+(r[2]||'')+'">'+r[1]+'</span></div>'; });
+    document.getElementById('summaryRows').innerHTML=h;
+    _summaryCb=cb; document.getElementById('summaryWrap').classList.add('show');
+  }
+  document.getElementById('summaryYes').onclick=function(){document.getElementById('summaryWrap').classList.remove('show'); if(_summaryCb){var f=_summaryCb;_summaryCb=null;f();}};
+  document.getElementById('summaryNo').onclick=function(){document.getElementById('summaryWrap').classList.remove('show'); _summaryCb=null;};
+  document.addEventListener('click',function(e){ if(!e.target.closest('.ac-wrap')) document.querySelectorAll('.ac-list').forEach(function(l){l.classList.remove('open');}); });
+
+  /* ===== МОСКВА ===== */
+  var mAction=null,mDirCur='UR',mLastKey='',mLastTime=0;
+  function mPick(el,a){
+    document.querySelectorAll('#scr-moscow .act-btn').forEach(function(b){b.classList.remove('sel');}); el.classList.add('sel'); mAction=a;
+    var ex=(a==='obmen');
+    document.getElementById('mNameField').classList.toggle('hidden',ex);
+    document.getElementById('mRubField').classList.toggle('hidden',ex);
+    document.getElementById('mUsdToggleField').classList.toggle('hidden',ex);
+    document.getElementById('mUsdField').classList.add('hidden'); document.getElementById('mUsdSwitch').checked=false;
+    document.getElementById('mExchField').classList.toggle('hidden',!ex);
+  }
+  function mDir(d){
+    mDirCur=d;
+    document.getElementById('mDirUR').classList.toggle('sel',d==='UR'); document.getElementById('mDirRU').classList.toggle('sel',d==='RU');
+    document.getElementById('mExLbl1').textContent=d==='UR'?'Бердим $':'Бердим ₽';
+    document.getElementById('mExLbl2').textContent=d==='UR'?'Олдим ₽':'Олдим $';
+    document.getElementById('mExA').value=''; document.getElementById('mExB').value=''; mCalcRate();
+  }
+  function mToggleUsd(){document.getElementById('mUsdField').classList.toggle('hidden',!document.getElementById('mUsdSwitch').checked);}
+  function mCalcRate(){
+    var a=moneyVal('mExA'),b=moneyVal('mExB'),rub,usd;
+    if(mDirCur==='UR'){usd=a;rub=b;}else{rub=a;usd=b;}
+    var box=document.getElementById('mRateCalc'),ri=document.getElementById('mRate');
+    if(rub>0&&usd>0){var rate=Math.round((rub/usd)*100)/100; ri.value=String(rate).replace('.',','); box.textContent=usd+' $ ≈ '+fmt(rub)+' ₽ · курс '+String(rate).replace('.',',');}
+    else{ri.value=''; box.textContent='Суммани киритинг — курс ўзи ҳисобланади';}
+  }
+  function mSubmit(){
+    if(!mAction){toast('Амал танланг',true); return;}
+    var p={action:mAction,note:document.getElementById('mNote').value.trim()};
+    if(mAction==='obmen'){
+      var a=moneyVal('mExA'),b=moneyVal('mExB');
+      if(a<=0||b<=0){toast('Суммаларни тўлдиринг',true); return;}
+      p.dir=mDirCur; p.exUsd=mDirCur==='UR'?a:b; p.exRub=mDirCur==='UR'?b:a; p.rate=document.getElementById('mRate').value;
+    } else {
+      p.name=document.getElementById('mName').value.trim(); p.rub=moneyVal('mRub');
+      p.usd=document.getElementById('mUsdSwitch').checked?moneyVal('mUsd'):0;
+      if(!p.name){toast('Мижозни танланг',true); return;}
+      if(p.rub<=0&&p.usd<=0){toast('Сумма киритинг',true); return;}
+    }
+    var key=JSON.stringify(p),now=Date.now();
+    if(key===mLastKey&&now-mLastTime<4000){toast('Ёзилмоқда, кутинг',true); return;}
+    mLastKey=key; mLastTime=now; p.opId='op_'+now+'_'+Math.random().toString(36).slice(2,8);
+    var btn=document.getElementById('mSubmit'); btn.disabled=true; btn.textContent='Ёзилмоқда…';
+    apiCall('saveMoscow',{payload:p},AUTH_TOKEN).then(function(res){
+      btn.disabled=false; btn.textContent='Сақлаш';
+      if(res.ok){ if(!res.dup) mShowOk(p); mReset(); mRefreshBalance(); mRefreshFeed(); } else toast(res.error||'Хато',true);
+    }).catch(function(){btn.disabled=false; btn.textContent='Сақлаш'; toast('Алоқа узилди',true);});
+  }
+  function mShowOk(p){
+    var label=p.action==='oldim'?'Олдим ＋':p.action==='berdim'?'Бердим －':'Обмен',det='';
+    if(p.action==='obmen'){det=(p.dir==='UR'?'$ '+fmt(p.exUsd)+' → '+fmt(p.exRub)+' ₽':fmt(p.exRub)+' ₽ → $ '+fmt(p.exUsd));}
+    else{var parts=[]; if(p.rub>0)parts.push(fmt(p.rub)+' ₽'); if(p.usd>0)parts.push('$ '+fmt(p.usd)); det=esc(p.name)+' · '+parts.join(' + ');}
+    showOk('Сақланди',label+' · '+det);
+  }
+  function mReset(){
+    document.querySelectorAll('#scr-moscow .act-btn').forEach(function(b){b.classList.remove('sel');}); mAction=null;
+    ['mName','mRub','mUsd','mNote','mExA','mExB','mRate'].forEach(function(id){var e=document.getElementById(id); if(e)e.value='';});
+    document.getElementById('mUsdSwitch').checked=false; document.getElementById('mUsdField').classList.add('hidden');
+    document.getElementById('mNameField').classList.remove('hidden'); document.getElementById('mRubField').classList.remove('hidden');
+    document.getElementById('mUsdToggleField').classList.remove('hidden'); document.getElementById('mExchField').classList.add('hidden'); mCalcRate();
+  }
+  function mRefreshBalance(){apiCall('getMoscowBalance',{},AUTH_TOKEN).then(function(b){document.getElementById('mskRub').textContent=fmt(b.rub)+' ₽'; document.getElementById('mskUsd').textContent='$ '+fmt(b.usd);});}
+  function mOpen(){
+    apiCall('openMoscow',{},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
+      var b=res.balance||{};
+      document.getElementById('mskRub').textContent=fmt(b.rub||0)+' ₽';
+      document.getElementById('mskUsd').textContent='$ '+fmt(b.usd||0);
+      mRenderFeed(res.feed||[]);
+    }).catch(function(){ toast('Алоқа узилди',true); });
+  }
+  var mFeedPeriodVal='today';
+  function mFeedPeriod(p){
+    mFeedPeriodVal=p;
+    document.getElementById('mFeedToday').classList.toggle('sel',p==='today');
+    document.getElementById('mFeedYesterday').classList.toggle('sel',p==='yesterday');
+    document.getElementById('mFeedWeek').classList.toggle('sel',p==='week');
+    mRefreshFeed();
+  }
+  function mRefreshFeed(){apiCall('getMoscowFeed',{limit:50,period:mFeedPeriodVal},AUTH_TOKEN).then(mRenderFeed);}
+  function mRenderFeed(items){
+    var box=document.getElementById('mFeed');
+    if(!items||!items.length){box.innerHTML='<div class="loading">Амал йўқ</div>'; return;}
+    var h=''; items.forEach(function(it){
+      var cls,amt;
+      if(it.action==='Обмен'){cls='gold'; amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+' / '+(it.rub<0?'−'+fmt(-it.rub):'+'+fmt(it.rub))+' ₽<span class="sub">курс '+(String(it.rate).replace('.',',')||'')+'</span>';}
+      else{var v=it.rub!==0?it.rub:it.usd; var cur=it.rub!==0?' ₽':' $'; cls=v<0?'minus':'plus'; amt=(v<0?'−':'+')+fmt(Math.abs(v))+cur;}
+      h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+amt+'</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  /* ===== общий движок региона (используют Узбекистан и Регионы) ===== */
+  function makeRegionEngine(pfx, getRegionName){
+    var st={action:null,rubEdited:false,lastKey:'',lastTime:0,avg:0};
+    function id(s){return document.getElementById(pfx+s);}
+    function pick(el,a){var p=document.getElementById('scr-'+(pfx==='u'?'uzb':'region')); p.querySelectorAll('.act-btn').forEach(function(b){b.classList.remove('sel');}); el.classList.add('sel'); st.action=a; calc();}
+    function calc(){
+      var usd=moneyVal(pfx+'Usd'+(pfx==='g'?'In':'')); var rate=parseFloat(String(id('Rate').value).replace(',','.'))||0;
+      if(!st.rubEdited){var ri=id('Rub'); if(usd>0&&rate>0) ri.value=Math.round(usd*rate).toLocaleString('ru-RU'); else ri.value='';}
+      hint(); render();
+    }
+    function rubEdit(){st.rubEdited=true; moneyFormat(id('Rub')); hint(); render();}
+    function hint(){
+      var usd=moneyVal(pfx+'Usd'+(pfx==='g'?'In':'')),rate=parseFloat(String(id('Rate').value).replace(',','.'))||0,rub=moneyVal(pfx+'Rub');
+      var h=id('Hint');
+      if(usd>0&&rate>0){var sug=usd*rate;
+        if(st.rubEdited&&Math.abs(rub-sug)>=1){h.innerHTML='<span class="ed">Тузатилди.</span> Курс бўйича '+fmt(sug)+' ₽ эди. Ҳисобга '+fmt(rub)+' ₽.';}
+        else h.textContent='Таклиф: '+usd+' × '+String(rate).replace('.',',')+' = '+fmt(sug)+' ₽.';
+      } else h.textContent='Доллар ва курсни киритинг.';
+    }
+    function render(){
+      var usd=moneyVal(pfx+'Usd'+(pfx==='g'?'In':'')),rub=moneyVal(pfx+'Rub'); var box=id('CalcBox');
+      if(!st.action||usd<=0||rub<=0){box.innerHTML='Амал танланг, доллар ва курс киритинг'; return;}
+      function row(l,v,c){return '<div class="calc-row"><span>'+l+'</span><span class="v '+(c||'')+'">'+v+'</span></div>';}
+      var html='';
+      if(st.action==='oldim'){
+        html+=row('Рубль-итог (мижозга қарз)','+'+fmt(rub)+' ₽','plus');
+        html+=row('Касса','+$'+fmt(usd),'plus');
+        html+=row('Прибыль','— (сотиб олиш)','');
+      } else {
+        var cost=Math.round(usd*st.avg); var profit=rub-cost;
+        html+=row('Рубль-итог (мижоз қарзи)','−'+fmt(rub)+' ₽','minus');
+        html+=row('Касса','−$'+fmt(usd),'minus');
+        html+=row('Таннарх',fmt(cost)+' ₽','');
+        html+=row('Прибыль',(profit>=0?'+':'')+fmt(profit)+' ₽',profit>=0?'gold':'minus');
+      }
+      box.innerHTML=html;
+    }
+    function submit(){
+      if(!st.action){toast('Амал танланг',true); return;}
+      var name=id('Name').value.trim(); var usd=moneyVal(pfx+'Usd'+(pfx==='g'?'In':''));
+      var rateRaw=id('Rate').value; var rub=moneyVal(pfx+'Rub');
+      if(!name){toast('Мижозни танланг',true); return;}
+      if(usd<=0){toast('Доллар киритинг',true); return;}
+      if(rub<=0){toast('Рубль киритинг',true); return;}
+      var p={action:st.action,region:getRegionName(),name:name,usd:usd,rate:rateRaw,rub:rub,
+        toWhom:id('ToWhom').value.trim(),phone:id('Phone').value.trim(),memo:id('Memo').value.trim()};
+
+      var showProfit=(USER_ROLE==='operator2'||USER_ROLE==='admin')&&st.action==='berdim';
+      var rows=[];
+      rows.push(['Ҳудуд', esc(p.region), '']);
+      rows.push(['Амал', st.action==='oldim'?'Олдим':'Бердим', st.action==='oldim'?'plus':'minus']);
+      rows.push(['Мижоз', esc(name), '']);
+      rows.push(['Доллар', '$ '+fmt(usd), '']);
+      rows.push(['Курс', String(rateRaw).replace('.',','), '']);
+      rows.push(['Рубль', fmt(rub)+' ₽', '']);
+      if(showProfit){ var profit=rub-Math.round(usd*st.avg); rows.push(['Фойда', (profit>=0?'+':'')+fmt(profit)+' ₽', profit>=0?'gold':'minus']); }
+      showSummary(rows, function(){ sendReg(p); });
+    }
+    function sendReg(p){
+      var key=JSON.stringify(p),now=Date.now();
+      if(key===st.lastKey&&now-st.lastTime<4000){toast('Яратилмоқда, кутинг',true); return;}
+      st.lastKey=key; st.lastTime=now; p.opId='op_'+now+'_'+Math.random().toString(36).slice(2,8);
+      var btn=id('Submit'); btn.disabled=true; btn.textContent='Яратилмоқда…';
+      apiCall('saveRegionRequest',{payload:p},AUTH_TOKEN).then(function(res){
+        btn.disabled=false; btn.textContent='Сделка яратиш';
+        if(res.ok){ if(!res.dup) showOk('Сделка яратилди',esc(p.name)+' · $'+fmt(p.usd)+' · '+fmt(p.rub)+' ₽'); reset(); refreshBalance(); refreshFeed(); loadReq(); }
+        else toast(res.error||'Хато',true);
+      }).catch(function(){btn.disabled=false; btn.textContent='Сделка яратиш'; toast('Алоқа узилди',true);});
+    }
+
+    function reset(){
+      var p=document.getElementById('scr-'+(pfx==='u'?'uzb':'region')); p.querySelectorAll('.act-btn').forEach(function(b){b.classList.remove('sel');}); st.action=null; st.rubEdited=false;
+      ['Name','Usd'+(pfx==='g'?'In':''),'Rate','Rub','ToWhom','Phone','Memo'].forEach(function(s){var e=id(s); if(e)e.value='';});
+      id('CalcBox').innerHTML='Амал танланг, доллар ва курс киритинг'; hint();
+    }
+    function refreshBalance(){
+      apiCall('getRegionBalance',{region:getRegionName()},AUTH_TOKEN).then(function(b){
+        st.avg=b.avg||0;
+        id('BalUsd').textContent='$ '+fmt(b.usd);
+        id('BalAvg').textContent='ўрт. курс '+(Math.round((b.avg||0)*100)/100).toFixed(2).replace('.',',');
+        id('BalProfit').textContent='Прибыль: '+(b.profit>=0?'+':'')+fmt(b.profit)+' ₽';
+      });
+      apiCall('getExecutorSummary',{region:getRegionName()},AUTH_TOKEN).then(function(s){
+        var oh=id('OnHand'), pd=id('Pending'), pc=id('PendCnt');
+        if(oh) oh.textContent=(s.onHand<0?'−$':'$ ')+fmt(Math.abs(s.onHand));
+        if(pd) pd.textContent=(s.pending<0?'−$':'+$')+fmt(Math.abs(s.pending));
+        if(pc) pc.textContent=s.count+' та';
+      });
+    }
+    function feedPeriod(p){
+      st.feedPeriod=p;
+      document.getElementById(pfx+'FeedToday').classList.toggle('sel',p==='today');
+      document.getElementById(pfx+'FeedYesterday').classList.toggle('sel',p==='yesterday');
+      document.getElementById(pfx+'FeedWeek').classList.toggle('sel',p==='week');
+      refreshFeed();
+    }
+    function refreshFeed(){apiCall('getRegionFeed',{region:getRegionName(),limit:12,period:st.feedPeriod||'today'},AUTH_TOKEN).then(renderFeed);}
+    function renderFeed(items){
+      var box=id('Feed');
+      if(!items||!items.length){box.innerHTML='<div class="loading">Сделка йўқ</div>'; return;}
+      var h=''; items.forEach(function(it){
+        var cls=it.usd<0?'minus':'plus';
+        var rubTxt=it.rub?(' · '+fmt(Math.abs(it.rub))+' ₽'):'';
+        var rateTxt=it.rate?(' · курс '+String(it.rate).replace('.',',')):'';
+        var amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+'<span class="sub">'+(it.status==='заявка'?'сделка':'бажарилган')+rateTxt+rubTxt+'</span>';
+        h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+amt+'</div></div>';
+      });
+      box.innerHTML=h;
+    }
+    function loadReq(){ apiCall('getRegionRequests',{region:getRegionName()},AUTH_TOKEN).then(renderReq); }
+    function renderReq(res){
+      var box=id('ReqList');
+      if(!res||!res.ok){box.innerHTML='<div class="empty">'+((res&&res.error)||'Нет доступа')+'</div>'; return;}
+      if(!res.active.length){box.innerHTML='<div class="empty">Фаол сделка йўқ</div>'; return;}
+      var h='';
+      res.active.forEach(function(it){
+        var isB=(it.usd<0); var cls=isB?'berdim':'oldim';
+        var actTxt=isB?'Беринг':'Олинг';
+        var phone=extractPhone(it.note); var toWhom=extractTag(it.note,'Кому'); var memo=extractMemo(it.note);
+        h+='<div class="req '+cls+'"><div class="req-top"><div><span class="req-act '+cls+'">'+actTxt+'</span></div><div><div class="req-sum '+cls+'">$ '+fmt(Math.abs(it.usd))+'</div></div></div>'+
+           '<div class="req-line"><span class="k">Клиент:</span><span class="v">'+esc(it.name)+'</span></div>'+
+           (toWhom?'<div class="req-line"><span class="k">Кимга:</span><span class="v">'+esc(toWhom)+'</span></div>':'')+
+           (phone?'<div class="req-line"><span class="k">Тел:</span><a class="phone-link" href="tel:'+esc(phone)+'">'+esc(phone)+'</a></div>':'')+
+           (memo?'<div class="req-line"><span class="k">Изоҳ:</span><span class="v">'+esc(memo)+'</span></div>':'')+
+           '<div class="req-btns"><button class="btn-done" data-id="'+esc(it.id)+'" onclick="engineDone(\''+pfx+'\',this)">Бажарилди</button>'+
+           '<a class="btn-share" href="'+waShareLink({a:actTxt,usd:Math.abs(it.usd),name:it.name,to:toWhom,phone:phone,memo:memo})+'" style="text-decoration:none;display:inline-flex;align-items:center;">Улашиш</a></div></div>';
+      });
+      box.innerHTML=h;
+    }
+    function setEdit(act, data){
+      var p=document.getElementById('scr-'+(pfx==='u'?'uzb':'region'));
+      p.querySelectorAll('.act-btn').forEach(function(b){b.classList.remove('sel');});
+      var ab=p.querySelector('.act-btn.'+act); if(ab) ab.classList.add('sel');
+      st.action=act; st.rubEdited=false;
+      id('Name').value=data.name||'';
+      id('Usd'+(pfx==='g'?'In':'')).value=data.usd?Math.abs(Number(data.usd)).toLocaleString('ru-RU'):'';
+      id('Rate').value=data.rate?String(data.rate).replace('.',','):'';
+      id('Rub').value=data.rub?Number(data.rub).toLocaleString('ru-RU'):'';
+      id('ToWhom').value=data.toWhom||'';
+      id('Phone').value=data.phone||'';
+      id('Memo').value=data.memo||'';
+      hint(); render();
+    }
+    function setAvg(a){ st.avg=a||0; }
+    return {pick:pick,calc:calc,rubEdit:rubEdit,submit:submit,refreshBalance:refreshBalance,refreshFeed:refreshFeed,loadReq:loadReq,renderReq:renderReq,renderFeed:renderFeed,setEdit:setEdit,feedPeriod:feedPeriod,setAvg:setAvg};
+  }
+
+  /* Узбекистан — регион фиксированный */
+  var UZB=makeRegionEngine('u',function(){return 'Узбекистан';});
+  function uPick(el,a){UZB.pick(el,a);} function uCalc(){UZB.calc();} function uRubEdit(){UZB.rubEdit();}
+  function uSubmit(){UZB.submit();} function uRefreshBalance(){UZB.refreshBalance();} function uRefreshFeed(){UZB.refreshFeed();} function uLoadReq(){UZB.loadReq();}
+  function uOpen(){
+    apiCall('openUzb',{},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
+      var b=res.balance||{};
+      UZB.setAvg(b.avg||0);
+      document.getElementById('uBalUsd').textContent='$ '+fmt(b.usd||0);
+      document.getElementById('uBalAvg').textContent='ўрт. курс '+(Math.round((b.avg||0)*100)/100).toFixed(2).replace('.',',');
+      document.getElementById('uBalProfit').textContent='Прибыль: '+((b.profit||0)>=0?'+':'')+fmt(b.profit||0)+' ₽';
+      var s=res.summary||{};
+      document.getElementById('uOnHand').textContent=((s.onHand||0)<0?'−$':'$ ')+fmt(Math.abs(s.onHand||0));
+      document.getElementById('uPending').textContent=((s.pending||0)<0?'−$':'+$')+fmt(Math.abs(s.pending||0));
+      document.getElementById('uPendCnt').textContent=(s.count||0)+' та';
+      UZB.renderFeed(res.feed||[]);
+      UZB.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
+    }).catch(function(){ toast('Алоқа узилди',true); });
+  }
+
+  /* Регионы — регион выбирается */
+  var gCurRegion='';
+  var REG=makeRegionEngine('g',function(){return gCurRegion;});
+  function gPick(el,a){REG.pick(el,a);} function gCalc(){REG.calc();} function gRubEdit(){REG.rubEdit();}
+  function gSubmit(){REG.submit();}
+  function gOpen(){
+    if(!gCurRegion) return;
+    apiCall('openRegion',{region:gCurRegion},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
+      var b=res.balance||{};
+      REG.setAvg(b.avg||0);
+      document.getElementById('gBalUsd').textContent='$ '+fmt(b.usd||0);
+      document.getElementById('gBalAvg').textContent='ўрт. курс '+(Math.round((b.avg||0)*100)/100).toFixed(2).replace('.',',');
+      document.getElementById('gBalProfit').textContent='Прибыль: '+((b.profit||0)>=0?'+':'')+fmt(b.profit||0)+' ₽';
+      var s=res.summary||{};
+      document.getElementById('gOnHand').textContent=((s.onHand||0)<0?'−$':'$ ')+fmt(Math.abs(s.onHand||0));
+      document.getElementById('gPending').textContent=((s.pending||0)<0?'−$':'+$')+fmt(Math.abs(s.pending||0));
+      document.getElementById('gPendCnt').textContent=(s.count||0)+' та';
+      REG.renderFeed(res.feed||[]);
+      REG.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
+    }).catch(function(){ toast('Алоқа узилди',true); });
+  }
+  var gRegList=[];
+  function regLetter(name){
+    return name.charAt(0).toUpperCase();
+  }
+  function gInitRegions(){
+    apiCall('getRegions',{},AUTH_TOKEN).then(function(list){
+      var arr=(list||[]).filter(function(r){return r!=='Узбекистан';});
+      gRegList=arr;
+      var keep=(gCurRegion && arr.indexOf(gCurRegion)>-1)?gCurRegion:(arr[0]||'');
+      gCurRegion=keep;
+      gRenderRegionTabs();
+      if(!arr.length){
+        document.getElementById('gFeed').innerHTML='<div class="empty">Создайте регион кнопкой +</div>';
+        document.getElementById('gReqList').innerHTML='';
+        return;
+      }
+      gOpen();
+    });
+  }
+  function gRenderRegionTabs(){
+    var box=document.getElementById('gRegionTabs'); var h='';
+    gRegList.forEach(function(r){
+      h+='<div class="reg-tab'+(r===gCurRegion?' sel':'')+'" onclick="gPickRegion(\''+esc(r).replace(/'/g,"\\'")+'\')"><div class="l">'+esc(regLetter(r))+'</div><div class="c">'+esc(r)+'</div></div>';
+    });
+    h+='<div class="reg-tab add" onclick="gAddRegion()"><div class="l">+</div><div class="c">Янги</div></div>';
+    box.innerHTML=h;
+  }
+  function gPickRegion(r){
+    if(r===gCurRegion) return;
+    gCurRegion=r; gRenderRegionTabs();
+    gOpen();
+  }
+  function gAddRegion(){
+    var n=prompt('Янги ҳудуд номи:'); if(!n) return;
+    apiCall('addRegion',{name:n.trim()},AUTH_TOKEN).then(function(res){
+      if(res.ok){ showOk('Ҳудуд яратилди',esc(res.name)); gInitRegions(); }
+      else toast(res.error||'Хато',true);
+    });
+  }
+  function engineDone(pfx,btn){
+    var id=btn.getAttribute('data-id');
+    askConfirm('Бажарилдими?', function(){
+      btn.disabled=true; btn.textContent='…';
+      apiCall('executeRequest',{opId:id},AUTH_TOKEN).then(function(res){
+        if(res.ok){showOk('Бажарилди',''); if(pfx==='u'){UZB.refreshBalance();UZB.refreshFeed();UZB.loadReq();}else{REG.refreshBalance();REG.refreshFeed();REG.loadReq();}}
+        else{btn.disabled=false; btn.textContent='Бажарилди'; toast(res.error||'Хато',true);}
+      }).catch(function(){btn.disabled=false; btn.textContent='Бажарилди'; toast('Алоқа узилди',true);});
+    }, 'uz');
+  }
+
+  function waShareLink(d){
+    var txt='Сделка: '+d.a+' $'+fmt(d.usd)+'\nКимдан: '+d.name+(d.to?'\nКимга: '+d.to:'')+(d.phone?'\nТел: '+d.phone:'')+(d.memo?'\nИзоҳ: '+d.memo:'');
+    return 'whatsapp://send?text='+encodeURIComponent(txt);
+  }
+  function shareReq(d){
+    var txt='Сделка: '+d.a+' $'+fmt(d.usd)+'\nКимдан: '+d.name+(d.to?'\nКимга: '+d.to:'')+(d.phone?'\nТел: '+d.phone:'')+(d.memo?'\nИзоҳ: '+d.memo:'');
+    if(navigator.share){ navigator.share({text:txt}).catch(function(){}); }
+    else { window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank'); }
+  }
+  function extractTag(note,tag){var m=String(note).match(new RegExp(tag+':\\s*([^|]+)')); return m?m[1].trim():'';}
+  function extractPhone(note){var m=String(note).match(/Тел:\s*([+\d]+)/); return m?m[1].trim():'';}
+  function extractMemo(note){var parts=String(note).split('|'); for(var i=0;i<parts.length;i++){var p=parts[i].trim(); if(p && p.indexOf('Кому:')!==0 && p.indexOf('Тел:')!==0) return p;} return '';}
+
+  /* ===== СДЕЛКИ оп.3 (только Узбекистан) ===== */
+  function rRefresh(){
+    apiCall('getExecutorSummary',{region:'Узбекистан'},AUTH_TOKEN).then(function(s){
+      document.getElementById('rOnHand').textContent='$ '+fmt(s.onHand);
+      document.getElementById('rPending').textContent=(s.pending<0?'−$':'+$')+fmt(Math.abs(s.pending));
+      document.getElementById('rPendCnt').textContent=s.count+' та';
+    });
+    apiCall('getRequests',{},AUTH_TOKEN).then(rRenderReq);
+  }
+  function rRenderReq(res){
+    var actBox=document.getElementById('rActiveList'), doneBox=document.getElementById('rDoneList');
+    if(!res||!res.ok){actBox.innerHTML='<div class="empty">'+((res&&res.error)||'Йўқ')+'</div>'; doneBox.innerHTML=''; return;}
+    var act=res.active.filter(function(it){return it.region==='Узбекистан';});
+    var dn=res.done.filter(function(it){return it.region==='Узбекистан';});
+    document.getElementById('rActiveCnt').textContent=act.length;
+    if(!act.length){actBox.innerHTML='<div class="empty">Фаол сделка йўқ</div>';}
+    else{
+      var h='';
+      act.forEach(function(it){
+        var isB=(it.usd<0); var cls=isB?'berdim':'oldim';
+        var actTxt=isB?'Беринг':'Олинг';
+        var phone=extractPhone(it.note); var toWhom=extractTag(it.note,'Кому'); var memo=extractMemo(it.note);
+        h+='<div class="req '+cls+'"><div class="req-top"><div><span class="req-act '+cls+'">'+actTxt+'</span></div><div><div class="req-sum '+cls+'">$ '+fmt(Math.abs(it.usd))+'</div></div></div>'+
+           '<div class="req-line"><span class="k">Клиент:</span><span class="v">'+esc(it.name)+'</span></div>'+
+           (toWhom?'<div class="req-line"><span class="k">Кимга:</span><span class="v">'+esc(toWhom)+'</span></div>':'')+
+           (phone?'<div class="req-line"><span class="k">Тел:</span><a class="phone-link" href="tel:'+esc(phone)+'">'+esc(phone)+'</a></div>':'')+
+           (memo?'<div class="req-line"><span class="k">Изоҳ:</span><span class="v">'+esc(memo)+'</span></div>':'')+
+           '<div class="req-meta">Яратди: '+esc(it.operator)+' · '+it.time+'</div>'+
+           '<div class="req-btns"><button class="btn-done" data-id="'+esc(it.id)+'" onclick="rDone(this)">Бажарилди</button>'+
+           '<a class="btn-share" href="'+waShareLink({a:actTxt,usd:Math.abs(it.usd),name:it.name,to:toWhom,phone:phone,memo:memo})+'" style="text-decoration:none;display:inline-flex;align-items:center;">Улашиш</a></div></div>';
+      });
+      actBox.innerHTML=h;
+    }
+    if(!dn.length){doneBox.innerHTML='<div class="empty">Бўш</div>';}
+    else{
+      var d='';
+      dn.forEach(function(it){
+        var isB=(it.usd<0); var cls=isB?'berdim':'oldim';
+        d+='<div class="done-item"><div class="done-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.time+' · '+(isB?'Бердим':'Олдим')+' · '+esc(it.executor||'')+'</div></div><div class="done-amt '+cls+'">'+(isB?'−$':'+$')+fmt(Math.abs(it.usd))+' <span class="check">✓</span></div></div>';
+      });
+      doneBox.innerHTML=d;
+    }
+  }
+  function rDone(btn){
+    var id=btn.getAttribute('data-id');
+    askConfirm('Бажарилдими?', function(){
+      btn.disabled=true; btn.textContent='…';
+      apiCall('executeRequest',{opId:id},AUTH_TOKEN).then(function(res){
+        if(res.ok){showOk('Бажарилди',''); rRefresh();}
+        else{btn.disabled=false; btn.textContent='Бажарилди'; toast(res.error||'Хато',true);}
+      }).catch(function(){btn.disabled=false; btn.textContent='Бажарилди'; toast('Алоқа узилди',true);});
+    }, 'uz');
+  }
+  /* ===== ПЕРЕВОДЫ ===== */
+  function tRefreshFeed(){
+    apiCall('getTransferFeed',{limit:10},AUTH_TOKEN).then(tRenderFeed);
+  }
+  function tRenderFeed(res){
+    var box=document.getElementById('tFeed');
+    if(!res||!res.ok){ box.innerHTML='<div class="empty">'+((res&&res.error)||'Нет доступа')+'</div>'; return; }
+    if(!res.items.length){ box.innerHTML='<div class="loading">Переводов нет</div>'; return; }
+    var h='';
+    res.items.forEach(function(it){
+      var cls=it.sum>0?'plus':(it.sum<0?'minus':'');
+      var sign=it.sum>0?'+':(it.sum<0?'−':'');
+      h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.note||'')+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.sum))+' ₽</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  function tSubmit(){
+    var from=document.getElementById('tFrom').value.trim(), to=document.getElementById('tTo').value.trim(), sum=moneyVal('tSum');
+    if(!from||!to){toast('Выберите клиентов',true); return;}
+    if(sum<=0){toast('Введите сумму',true); return;}
+    askConfirm('Выполнить перевод '+from+' → '+to+'?', function(){
+      var btn=document.getElementById('tSubmit'); btn.disabled=true; btn.textContent='…';
+      apiCall('saveTransfer',{payload:{from:from,to:to,sum:sum,note:document.getElementById('tNote').value.trim()}},AUTH_TOKEN).then(function(res){
+        btn.disabled=false; btn.textContent='Выполнить перевод';
+        if(res.ok){showOk('Перевод выполнен',esc(from)+' → '+esc(to)+' · '+fmt(sum)+' ₽'); ['tFrom','tTo','tSum','tNote'].forEach(function(id){document.getElementById(id).value='';}); tRefreshFeed();}
+        else toast(res.error||'Ошибка',true);
+      }).catch(function(){btn.disabled=false; btn.textContent='Выполнить перевод'; toast('Сбой связи',true);});
+    });
+  }
+
+  /* ===== ПРАВКИ ===== */
+  function aTab(name){
+    ['cancel','start','recalc'].forEach(function(t){document.getElementById('stab-'+t).classList.toggle('sel',t===name); document.getElementById('aPane-'+t).classList.toggle('hidden',t!==name);});
+    if(name==='cancel') aLoadCancel();
+  }
+  var aRegionLoaded=false;
+  function aInitRegionFilter(){
+    if(aRegionLoaded) return; aRegionLoaded=true;
+    apiCall('getRegions',{},AUTH_TOKEN).then(function(list){
+      var arr=(list||[]); var sel=document.getElementById('aRegion');
+      var opts='<option value="">Все</option><option value="Москва">Москва</option>';
+      arr.forEach(function(r){ opts+='<option value="'+esc(r)+'">'+esc(r)+'</option>'; });
+      sel.innerHTML=opts;
+    });
+  }
+  function aLoadCancel(){
+    aInitRegionFilter();
+    var filter={
+      dateFrom: document.getElementById('aDateFrom').value||'',
+      dateTo:   document.getElementById('aDateTo').value||'',
+      action:   document.getElementById('aAction').value||'',
+      region:   document.getElementById('aRegion').value||'',
+      name:     document.getElementById('aName').value.trim()||''
     };
-    var url = APP_URL;
-    var qs = [];
-    if(lang) qs.push('lang=' + encodeURIComponent(lang));
-    var token = getCookie('kassa_token');
-    if(token) qs.push('token=' + encodeURIComponent(token));
-    if(qs.length) url += '?' + qs.join('&');
-    frame.src = url;
+    apiCall('getOperationsForCancel',{filter:filter,limit:50},AUTH_TOKEN).then(aRenderCancel);
+  }
+  function aResetCancel(){
+    document.getElementById('aDateFrom').value='';
+    document.getElementById('aDateTo').value='';
+    document.getElementById('aAction').value='';
+    document.getElementById('aRegion').value='';
+    document.getElementById('aName').value='';
+    aLoadCancel();
+  }
+  function aRenderCancel(res){
+    var box=document.getElementById('aCancelList');
+    if(!res||!res.ok){box.innerHTML='<div class="empty">'+((res&&res.error)||'Нет доступа')+'</div>'; return;}
+    if(!res.items.length){box.innerHTML='<div class="empty">Нет операций</div>'; return;}
+    var h='';
+    res.items.forEach(function(it){
+      var rateTxt=it.rate?(' · курс '+String(it.rate).replace('.',',')):'';
+      var canEdit=(it.action==='Олдим'||it.action==='Бердим');
+      var editBtn=canEdit?'<button class="btn-share" style="padding:9px 12px;" onclick=\'aEdit('+JSON.stringify(it).replace(/'/g,"&#39;")+')\'>Исправить</button>':'';
+      h+='<div class="cancel-item"><div class="info"><div class="t">'+esc(it.action)+' · '+esc(it.name||'—')+' · '+(it.usd?'$'+fmt(it.usd):'')+(it.rub?' '+fmt(it.rub)+'₽':'')+rateTxt+'</div><div class="m">'+it.time+' · '+esc(it.region||'')+' · '+esc(it.operator)+' · '+esc(it.status)+'</div></div><div style="display:flex;gap:6px;flex:0 0 auto;">'+editBtn+'<button class="btn-cancel" data-id="'+esc(it.id)+'" onclick="aCancel(this)">Отменить</button></div></div>';
+    });
+    box.innerHTML=h;
+  }
+  function aCancel(btn){
+    var id=btn.getAttribute('data-id');
+    askConfirm('Отменить эту операцию?', function(){
+      btn.disabled=true; btn.textContent='…';
+      apiCall('cancelOperation',{opId:id},AUTH_TOKEN).then(function(res){
+        if(res.ok){showOk('Отменено',''); aLoadCancel();}
+        else{btn.disabled=false; btn.textContent='Отменить'; toast(res.error||'Ошибка',true);}
+      }).catch(function(){btn.disabled=false; btn.textContent='Отменить'; toast('Сбой связи',true);});
+    });
+  }
+  function aEdit(it){
+    askConfirm('Исправить операцию? Старая отменится, откроется форма с её данными.', function(){
+      apiCall('cancelOperation',{opId:it.id},AUTH_TOKEN).then(function(res){
+        if(!res.ok){ toast(res.error||'Ошибка отмены',true); return; }
+        showOk('Можно исправлять','Старая операция отменена');
+        var region=String(it.region||'').trim();
+        var act=(it.action==='Олдим')?'oldim':'berdim';
+        if(region==='Москва') startEditMoscow(act,it);
+        else if(region==='Узбекистан') startEditRegionLike('u',act,it,region);
+        else startEditRegionLike('g',act,it,region);
+      }).catch(function(){toast('Сбой связи',true);});
+    });
+  }
+  function startEditRegionLike(pfx,act,it,region){
+    var screen=(pfx==='u')?'uzb':'region';
+    showScreen(screen); document.querySelector('.tab[data-s='+screen+']') && selectTabByName(screen);
+    var run=function(){
+      if(pfx==='g'){ gPickRegion(region); }
+      var eng=(pfx==='u')?UZB:REG;
+      eng.setEdit(act, {
+        name: it.name||'',
+        usd: it.usd||0,
+        rate: it.rate||'',
+        rub: it.rub||0,
+        toWhom: extractTag(it.note,'Кому'),
+        phone: extractPhone(it.note),
+        memo: extractMemo(it.note)
+      });
+    };
+    setTimeout(run, 60);
+  }
+  function startEditMoscow(act,it){
+    showScreen('moscow'); selectTabByName('moscow');
+    setTimeout(function(){
+      var btn=document.querySelector('#scr-moscow .act-btn.'+act); if(btn) mPick(btn,act);
+      document.getElementById('mName').value=it.name||'';
+      document.getElementById('mRub').value=it.rub?Number(it.rub).toLocaleString('ru-RU'):'';
+      if(it.usd&&Math.abs(it.usd)>0){
+        document.getElementById('mUsdSwitch').checked=true; mToggleUsd();
+        document.getElementById('mUsd').value=Number(Math.abs(it.usd)).toLocaleString('ru-RU');
+      }
+    },60);
+  }
+  function selectTabByName(name){
+    document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('sel', b.getAttribute('data-s')===name); });
+  }
+  var sTypeVal='hakdor';
+  function sType(t){sTypeVal=t; document.getElementById('segHak').classList.toggle('sel',t==='hakdor'); document.getElementById('segKarz').classList.toggle('sel',t==='karzdor');}
+  function sSubmit(){
+    var name=document.getElementById('sName').value.trim(), sum=moneyVal('sSum');
+    if(!name){toast('Выберите клиента',true); return;}
+    if(sum<=0){toast('Введите сумму',true); return;}
+    var btn=document.getElementById('sSubmit'); btn.disabled=true; btn.textContent='…';
+    apiCall('saveStartBalance',{payload:{name:name,sum:sum,type:sTypeVal}},AUTH_TOKEN).then(function(res){
+      btn.disabled=false; btn.textContent='Записать остаток';
+      if(res.ok){showOk('Остаток записан',esc(name)+' · '+(sTypeVal==='hakdor'?'+':'−')+fmt(sum)+' ₽'); document.getElementById('sName').value=''; document.getElementById('sSum').value='';}
+      else toast(res.error||'Ошибка',true);
+    }).catch(function(){btn.disabled=false; btn.textContent='Записать остаток'; toast('Сбой связи',true);});
+  }
+  function rcSubmit(){
+    askConfirm('Пересчитать все кассы регионов?', function(){
+      var btn=document.getElementById('rcSubmit'); btn.disabled=true; btn.textContent='…';
+      apiCall('recalcButton',{},AUTH_TOKEN).then(function(res){
+        btn.disabled=false; btn.textContent='Пересчитать всё';
+        if(res.ok) showOk('Пересчитано',''); else toast(res.error||'Ошибка',true);
+      }).catch(function(){btn.disabled=false; btn.textContent='Пересчитать всё'; toast('Сбой связи',true);});
+    });
   }
 
-  function choose(lang){
-    setCookie('kassa_lang', lang, 365);
-    openApp(lang);
+  function rcMonthSubmit(){
+    askConfirm('Пересчитать прибыль за месяц по средневзвешенному курсу? Прибыль всех продаж будет перезаписана.', function(){
+      var btn=document.getElementById('rcMonthSubmit'); btn.disabled=true; btn.textContent='…';
+      apiCall('recalcMonthlyProfit',{},AUTH_TOKEN).then(function(res){
+        btn.disabled=false; btn.textContent='Пересчитать прибыль (месяц)';
+        if(res.ok) showOk('Пересчитано', (res.changed||0)+' сделка янгиланди');
+        else toast(res.error||'Ошибка',true);
+      }).catch(function(){btn.disabled=false; btn.textContent='Пересчитать прибыль (месяц)'; toast('Сбой связи',true);});
+    });
   }
+  /* ===== ОТЧЁТЫ ===== */
+  var BAL_DATA=[], balCurFilter='all';
+  function repInit(){ repTab('balance'); }
+  function repTab(name){
+    ['balance','daily','overview'].forEach(function(t){
+      var tab=document.getElementById('rtab-'+t), pane=document.getElementById('repPane-'+t);
+      if(tab) tab.classList.toggle('sel', t===name);
+      if(pane) pane.classList.toggle('hidden', t!==name);
+    });
+    if(name==='balance') balLoad();
+    if(name==='daily') dlLoad();
+    if(name==='overview') ovLoad();
+  }
+  function ovLoad(){
+    document.getElementById('ovBox').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    apiCall('getOverview',{},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ document.getElementById('ovBox').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      ovRender(res);
+    }).catch(function(){ document.getElementById('ovBox').innerHTML='<div class="empty">Алоқа узилди</div>'; });
+  }
+  function ovRender(d){
+    function line(name,rub,sub,cls){
+      return '<div class="op-item"><div class="op-left"><div class="nm">'+esc(name)+'</div>'+(sub?'<div class="mt">'+sub+'</div>':'')+'</div><div class="op-amt '+(cls||'')+'">'+fmt(rub)+' ₽</div></div>';
+    }
+    var h='';
+    h+='<div class="card"><h2 style="font-size:13px;color:var(--muted);margin:0 0 10px 2px;text-transform:uppercase;letter-spacing:.5px;">Активлар (пул қаерда)</h2>';
+    h+=line('Касса Москва', d.moscow.total, '$'+fmt(d.moscow.usd)+' · ўрт.курс '+String(d.moscow.avg).replace('.',',')+' · нақд '+fmt(d.moscow.rubCash)+' ₽','plus');
+    d.regions.forEach(function(r){
+      h+=line('Қолдиқ '+r.name, r.rub, '$'+fmt(r.usd)+' · ўрт.курс '+String(r.avg).replace('.',','),'plus');
+    });
+    h+=line('Қарздорлар', d.karzdor, 'менга қарздор', 'plus');
+    h+='<div class="op-item" style="border-top:2px solid var(--line);margin-top:4px;"><div class="op-left"><div class="nm" style="font-weight:800;">ЖАМИ АКТИВ</div></div><div class="op-amt" style="font-weight:800;">'+fmt(d.activeTotal)+' ₽</div></div>';
+    h+='</div>';
+    h+='<div class="card"><h2 style="font-size:13px;color:var(--muted);margin:0 0 10px 2px;text-transform:uppercase;letter-spacing:.5px;">Мажбурият (пул кимники)</h2>';
+    h+=line('Ҳақдорлар', d.hakdor, 'мен қарздорман', 'minus');
+    h+=line('Фойда (жами)', d.profitTotal, 'E + F', 'gold');
+    h+='<div class="op-item" style="border-top:2px solid var(--line);margin-top:4px;"><div class="op-left"><div class="nm" style="font-weight:800;">ЖАМИ</div></div><div class="op-amt" style="font-weight:800;">'+fmt(d.liabTotal)+' ₽</div></div>';
+    h+='</div>';
+    var farqCls=d.farq===0?'plus':(d.farq>0?'gold':'minus');
+    h+='<div class="card" style="text-align:center;"><div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Фарқ (актив − мажбурият)</div>'+
+       '<div style="font-size:24px;font-weight:800;" class="op-amt '+farqCls+'">'+(d.farq>0?'+':d.farq<0?'−':'')+fmt(Math.abs(d.farq))+' ₽</div>'+
+       '<div style="font-size:11px;color:var(--muted);margin-top:6px;">0 = тўлиқ мос келади</div></div>';
+    document.getElementById('ovBox').innerHTML=h;
+  }
+  function balLoad(){
+    document.getElementById('balList').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    apiCall('getClientsBalance',{},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ document.getElementById('balList').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      BAL_DATA=res.items||[];
+      document.getElementById('balTotalPlus').textContent=fmt(res.totalPlus)+' ₽';
+      document.getElementById('balTotalMinus').textContent=fmt(res.totalMinus)+' ₽';
+      balRender();
+    }).catch(function(){ document.getElementById('balList').innerHTML='<div class="empty">Алоқа узилди</div>'; });
+  }
+  function balFilter(f){
+    balCurFilter=f;
+    document.getElementById('balfAll').classList.toggle('sel',f==='all');
+    document.getElementById('balfHak').classList.toggle('sel',f==='hak');
+    document.getElementById('balfKarz').classList.toggle('sel',f==='karz');
+    balRender();
+  }
+  /* ===== КУНЛИК (ежедневные отчёты) ===== */
+  var dlDayVal='today', dlLangVal='uz', dlOpenName='', dlCache={};
+  function dlDay(d){
+    dlDayVal=d;
+    document.getElementById('dlToday').classList.toggle('sel',d==='today');
+    document.getElementById('dlYesterday').classList.toggle('sel',d==='yesterday');
+    dlOpenName=''; dlCache={}; dlLoad();
+  }
+  function dlLang(l){
+    dlLangVal=l;
+    document.getElementById('dlLangUz').classList.toggle('sel',l==='uz');
+    document.getElementById('dlLangRu').classList.toggle('sel',l==='ru');
+    dlCache={};
+    if(dlOpenName) dlBuildText(dlOpenName);
+  }
+  var dlReports={};
+  function dlLoad(){
+    document.getElementById('dlList').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    function loadClients(){
+      apiCall('getDailyClients',{day:dlDayVal},AUTH_TOKEN).then(function(res){
+        if(!res||!res.ok){ document.getElementById('dlList').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+        dlRender(res.clients||[]);
+      }).catch(function(){ document.getElementById('dlList').innerHTML='<div class="empty">Алоқа узилди</div>'; });
+    }
+    apiCall('getDailyReports',{day:dlDayVal,lang:dlLangVal},AUTH_TOKEN).then(function(rep){
+      dlReports=(rep&&rep.ok&&rep.reports)?rep.reports:{};
+      loadClients();
+    }).catch(function(){
+      dlReports={};
+      loadClients();
+    });
+  }
+  function dlRender(clients){
+    var box=document.getElementById('dlList');
+    if(!clients.length){ box.innerHTML='<div class="empty">'+(dlDayVal==='yesterday'?'Кеча сделка бўлмаган':'Бугун сделка йўқ')+'</div>'; return; }
+    var active=clients.filter(function(c){return !c.sent;});
+    var sent=clients.filter(function(c){return c.sent;});
+    var h='';
+    if(active.length){
+      h+='<div class="sec-title" style="margin-top:0;">Фаол <span class="badge">'+active.length+'</span></div>';
+      active.forEach(function(c){ h+=dlCard(c); });
+    }
+    if(sent.length){
+      h+='<div class="sec-title">Юборилди</div>';
+      sent.forEach(function(c){ h+=dlCard(c); });
+    }
+    box.innerHTML=h;
+    if(dlOpenName) dlBuildText(dlOpenName);
+  }
+  function dlCard(c){
+    var op=(c.name===dlOpenName);
+    var safeName=esc(c.name).replace(/'/g,"\\'");
+    return '<div class="req '+(c.sent?'':'oldim')+'" style="'+(c.sent?'opacity:.7;':'')+'">'+
+      '<div class="req-top" style="margin-bottom:'+(op?'10px':'0')+';">'+
+      '<div onclick="dlToggle(\''+safeName+'\')" style="cursor:pointer;flex:1;">'+
+      '<div class="nm" style="font-size:15px;font-weight:600;">'+esc(c.name)+'</div>'+
+      '<div class="req-meta" style="margin-top:3px;">'+c.count+' та сделка'+(c.sent?' · ✓ юборилди':'')+'</div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div onclick="dlToggle(\''+safeName+'\')" style="width:38px;height:38px;border-radius:10px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;">'+(op?'▴':'▾')+'</div>'+
+        dlWaButton(c)+
+      '</div></div>'+
+      '<div id="dlBody-'+esc(c.name).replace(/[^a-zA-Zа-яА-Я0-9]/g,'_')+'" '+(op?'':'class="hidden"')+'></div>'+
+      '</div>';
+  }
+  function dlWaButton(c){
+    var rep=dlReports[c.name];
+    var base='width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;text-decoration:none;border:1px solid #25d366;';
+    if(!rep||!rep.text){
+      return '<div style="'+base+'background:var(--card2);color:var(--muted);">…</div>';
+    }
+    var enc=encodeURIComponent(rep.text);
+    var url=rep.phone ? ('whatsapp://send?phone='+rep.phone+'&text='+enc) : ('whatsapp://send?text='+enc);
+    var bg=c.sent?'var(--card2)':'#25d366';
+    var col=c.sent?'#25d366':'#0b3d22';
+    var safeName=esc(c.name).replace(/'/g,"\\'");
+    return '<a href="'+url+'" onclick="dlSent(\''+safeName+'\')" style="'+base+'background:'+bg+';color:'+col+';">✆</a>';
+  }
+  function dlBodyId(name){ return 'dlBody-'+name.replace(/[^a-zA-Zа-яА-Я0-9]/g,'_'); }
 
-  window.addEventListener('message', function(ev){
-    var d = ev.data || {};
-    if(d.type === 'kassa_token' && d.token){
-      setCookie('kassa_token', d.token, 30);
-    } else if(d.type === 'kassa_logout'){
-      delCookie('kassa_token');
-      location.reload();
+  function dlToggle(name){
+    if(dlOpenName===name){ dlOpenName=''; dlRender_keep(); return; }
+    dlOpenName=name; dlRender_keep(); dlBuildText(name);
+  }
+  function dlRender_keep(){ dlLoad(); }
+  function dlBuildText(name){
+    var bodyId=dlBodyId(name);
+    var el=document.getElementById(bodyId);
+    if(!el) return;
+    if(dlCache[name]){ dlShowText(name, dlCache[name].text, dlCache[name].phone); return; }
+    el.innerHTML='<div class="loading">Юкланмоқда…</div>';
+    var today=dlDayKey();
+    apiCall('getClientReport',{name:name,dateFrom:today,dateTo:today,lang:dlLangVal},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ el.innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      dlCache[name]={text:res.text, phone:res.phone||''};
+      dlShowText(name, res.text, res.phone||'');
+    }).catch(function(){ el.innerHTML='<div class="empty">Алоқа узилди</div>'; });
+  }
+  function dlDayKey(){
+    var d=new Date(); if(dlDayVal==='yesterday') d=new Date(d.getTime()-86400000);
+    var z=function(n){return (n<10?'0':'')+n;};
+    return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());
+  }
+  function dlShowText(name, text, phone){
+    var el=document.getElementById(dlBodyId(name));
+    if(!el) return;
+    var enc=encodeURIComponent(text);
+    var wa = phone
+      ? '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/'+phone+'?text='+enc+'" target="_blank" onclick="dlSent(\''+esc(name).replace(/'/g,"\\'")+'\')">WhatsApp</a>'
+      : '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/?text='+enc+'" target="_blank" onclick="dlSent(\''+esc(name).replace(/'/g,"\\'")+'\')">WhatsApp (рақамсиз)</a>';
+    el.innerHTML='<pre style="white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:14px;line-height:1.5;margin:0 0 12px;color:var(--txt);">'+esc(text)+'</pre>'+
+      '<div class="req-btns"><button class="btn-share" style="flex:1;" onclick="dlCopy(\''+esc(name).replace(/'/g,"\\'")+'\')">Нусха</button>'+wa+'</div>';
+  }
+  function dlCopy(name){
+    var t=dlCache[name]?dlCache[name].text:'';
+    if(!t) return;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){toast('Нусха олинди');},function(){dlCopyFb(t);});
+    } else dlCopyFb(t);
+  }
+  function dlCopyFb(t){
+    var ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy'); toast('Нусха олинди');}catch(e){toast('Нусха олинмади',true);}
+    document.body.removeChild(ta);
+  }
+  function dlSent(name){
+    var period=(dlDayVal==='yesterday')?'Кеча':'Бугун';
+    apiCall('logReportSent',{name:name,reportDay:dlDayKey(),period:period,lang:dlLangVal,source:'Кунлик'},AUTH_TOKEN);
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden){
+      var pane=document.getElementById('repPane-daily');
+      if(pane && !pane.classList.contains('hidden')) dlLoad();
     }
   });
 
-  (function init(){
-    var lang = getCookie('kassa_lang');
-    var token = getCookie('kassa_token');
-    if(lang || token){ openApp(lang || 'uz'); }
-  })();
+  /* ===== ОТЧЁТ ПО КЛИЕНТУ ===== */
+  var crLangVal='uz', crPeriodVal='today', crText='', crPhone='';
+  function crLang(l){crLangVal=l; document.getElementById('crLangUz').classList.toggle('sel',l==='uz'); document.getElementById('crLangRu').classList.toggle('sel',l==='ru');}
+  function crPeriod(p){
+    crPeriodVal=p;
+    document.getElementById('crPerToday').classList.toggle('sel',p==='today');
+    document.getElementById('crPerRange').classList.toggle('sel',p==='range');
+    document.getElementById('crPerAll').classList.toggle('sel',p==='all');
+    document.getElementById('crRangeBox').classList.toggle('hidden',p!=='range');
+  }
+  function crToday(){
+    var d=new Date(), z=function(n){return (n<10?'0':'')+n;};
+    return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());
+  }
+  function crBuild(){
+    var name=document.getElementById('crName').value.trim();
+    if(!name){toast('Мижозни танланг',true); return;}
+    var from='', to='';
+    if(crPeriodVal==='today'){ from=crToday(); to=crToday(); }
+    else if(crPeriodVal==='range'){
+      from=document.getElementById('crFrom').value||'';
+      to=document.getElementById('crTo').value||'';
+      if(!from&&!to){toast('Даврни танланг',true); return;}
+    }
+    var btn=document.getElementById('crBtn'); btn.disabled=true; btn.textContent='…';
+    document.getElementById('crResult').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    apiCall('getClientReport',{name:name,dateFrom:from,dateTo:to,lang:crLangVal},AUTH_TOKEN).then(function(res){
+      btn.disabled=false; btn.textContent='Тайёрлаш';
+      if(!res||!res.ok){ document.getElementById('crResult').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      crText=res.text; crPhone=res.phone||'';
+      crShow();
+    }).catch(function(){btn.disabled=false; btn.textContent='Тайёрлаш'; document.getElementById('crResult').innerHTML='<div class="empty">Алоқа узилди</div>';});
+  }
+  function crShow(){
+    var waBtn = crPhone
+      ? '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/'+crPhone+'?text='+encodeURIComponent(crText)+'" target="_blank">WhatsApp</a>'
+      : '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/?text='+encodeURIComponent(crText)+'" target="_blank">WhatsApp (рақамсиз)</a>';
+    var h='<div class="card">'+
+      '<pre style="white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:14px;line-height:1.5;margin:0 0 14px;color:var(--txt);">'+esc(crText)+'</pre>'+
+      '<div class="req-btns"><button class="btn-share" style="flex:1;" onclick="crCopy()">Нусха</button>'+waBtn+'</div></div>';
+    document.getElementById('crResult').innerHTML=h;
+  }
+  function crCopy(){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(crText).then(function(){toast('Нусха олинди');},function(){crCopyFallback();});
+    } else crCopyFallback();
+  }
+  function crCopyFallback(){
+    var ta=document.createElement('textarea'); ta.value=crText; document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy'); toast('Нусха олинди');}catch(e){toast('Нусха олинмади',true);}
+    document.body.removeChild(ta);
+  }
+  function balClearToggle(){
+    var v=document.getElementById('balSearch').value;
+    document.getElementById('balClear').style.display = v ? 'flex' : 'none';
+  }
+  function balClearSearch(){
+    document.getElementById('balSearch').value='';
+    balClearToggle();
+    balRender();
+  }
+  function balRender(){
+    var q=document.getElementById('balSearch').value.trim().toLowerCase();
+    var box=document.getElementById('balList');
+    var list=BAL_DATA.filter(function(it){
+      if(q && it.name.toLowerCase().indexOf(q)===-1) return false;
+      if(balCurFilter==='hak' && it.balance<=0) return false;
+      if(balCurFilter==='karz' && it.balance>=0) return false;
+      return true;
+    });
+    if(!list.length){ box.innerHTML='<div class="empty">Мижоз йўқ</div>'; return; }
+    var h='';
+    list.forEach(function(it){
+      var cls=it.balance>0?'plus':(it.balance<0?'minus':'');
+      var sign=it.balance>0?'+':(it.balance<0?'−':'');
+      var dot=it.today?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle;"></span>':'';
+      var clickable=!it.pseudo;
+      var clickAttr=clickable?(' style="cursor:pointer;" onclick="openClient(\''+esc(it.name).replace(/'/g,"\\'")+'\')"'):' style="opacity:.55;"';
+      h+='<div class="op-item"'+clickAttr+'><div class="op-left"><div class="nm">'+dot+esc(it.name)+'</div><div class="mt">'+(it.last||'—')+' · '+it.count+' сделка'+(it.pseudo?' · '+esc(it.sub||''):'')+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.balance))+' ₽</div></div>';
+    });
+    box.innerHTML=h;
+  }
+
+  /* ===== ЭКРАН КЛИЕНТА (история по тапу из баланса) ===== */
+  var clCurName='', clCurPhone='', clPeriodVal='all', clReportText='', clReportPhone='';
+
+  function openClient(name){
+    clCurName=name; clPeriodVal='all'; clReportText=''; clReportPhone='';
+    document.getElementById('clName').textContent=name;
+    document.getElementById('clPhone').textContent='';
+    document.getElementById('clReportResult').innerHTML='';
+    document.getElementById('clRangeBox').classList.add('hidden');
+    document.getElementById('clPerAll').classList.add('sel');
+    document.getElementById('clPerToday').classList.remove('sel');
+    document.getElementById('clPerRange').classList.remove('sel');
+    ['moscow','uzb','region','req','transfer','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
+    document.getElementById('scr-client').classList.remove('hidden');
+    clLoadOps();
+  }
+  function clientBack(){
+    document.getElementById('scr-client').classList.add('hidden');
+    document.getElementById('scr-reports').classList.remove('hidden');
+    repTab('balance');
+  }
+  function clPeriod(p){
+    clPeriodVal=p;
+    document.getElementById('clPerAll').classList.toggle('sel',p==='all');
+    document.getElementById('clPerToday').classList.toggle('sel',p==='today');
+    document.getElementById('clPerRange').classList.toggle('sel',p==='range');
+    document.getElementById('clRangeBox').classList.toggle('hidden',p!=='range');
+    if(p!=='range') clLoadOps();
+  }
+  function clDates(){
+    var d=new Date(), z=function(n){return (n<10?'0':'')+n;};
+    var today=d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());
+    if(clPeriodVal==='today') return {from:today,to:today};
+    if(clPeriodVal==='range') return {from:document.getElementById('clFrom').value||'', to:document.getElementById('clTo').value||''};
+    return {from:'',to:''};
+  }
+  function clLoadOps(){
+    var box=document.getElementById('clOpsList');
+    box.innerHTML='<div class="loading">Юкланмоқда…</div>';
+    document.getElementById('clReportResult').innerHTML='';
+    var d=clDates();
+    apiCall('getClientReport',{name:clCurName,dateFrom:d.from,dateTo:d.to,lang:'uz'},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ box.innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      clReportText=res.text||''; clReportPhone=res.phone||'';
+      clRenderBalance(res.closing||0, res.ops?res.ops.length:0);
+      clRenderOps(res.ops||[]);
+    }).catch(function(){ box.innerHTML='<div class="empty">Алоқа узилди</div>'; });
+  }
+  function clRenderBalance(closing, count){
+    var el=document.getElementById('clBalance');
+    var cls=closing>0?'plus':(closing<0?'minus':'');
+    el.className='rub '+cls; el.style.fontSize='26px';
+    el.textContent=(closing>0?'+':closing<0?'−':'')+fmt(Math.abs(closing))+' ₽';
+    document.getElementById('clBalSub').textContent=(closing>0?'сизга қарзимиз':closing<0?'қарзингиз':'тенг')+' · '+count+' сделка';
+  }
+  function clRenderOps(ops){
+    var box=document.getElementById('clOpsList');
+    if(!ops.length){ box.innerHTML='<div class="empty">Сделка йўқ</div>'; return; }
+    var h='';
+    ops.forEach(function(it){
+      var title, amtMain, amtSub='', cls;
+      if(it.action==='Перевод'){
+        cls=it.h>=0?'plus':'minus';
+        title='Перевод'; amtMain=(it.h>=0?'+':'−')+fmt(it.rub)+' ₽';
+      } else if(it.action==='Старт'){
+        cls=it.h>=0?'plus':'minus';
+        title='Бошланғич'; amtMain=(it.h>=0?'+':'−')+fmt(it.rub)+' ₽';
+      } else {
+        cls=it.usd<0?'minus':'plus';
+        title=esc(it.action)+(it.region?' · '+esc(it.region):'');
+        var rateTxt=it.rate?(' · курс '+String(it.rate).replace('.',',')):'';
+        amtMain=(Math.abs(it.usd)>0?((it.usd<0?'−$':'+$')+fmt(Math.abs(it.usd))):((it.h<0?'−':'+')+fmt(it.rub)+' ₽'));
+        amtSub=(Math.abs(it.usd)>0?fmt(it.rub)+' ₽':'')+rateTxt;
+        amtSub=amtSub.replace(/^ · /,'');
+      }
+      h+='<div class="op-item"><div class="op-left"><div class="nm">'+title+'</div><div class="mt">'+it.datetime+'</div></div><div class="op-amt '+cls+'">'+amtMain+(amtSub?'<span class="sub">'+amtSub+'</span>':'')+'</div></div>';
+    });
+    box.innerHTML=h;
+  }
+  function clBuildReport(){
+    if(!clReportText){ toast('Аввал сделкаларни юкланг',true); return; }
+    var enc=encodeURIComponent(clReportText);
+    var wa = clReportPhone
+      ? '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/'+clReportPhone+'?text='+enc+'" target="_blank">WhatsApp</a>'
+      : '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/?text='+enc+'" target="_blank">WhatsApp (рақамсиз)</a>';
+    document.getElementById('clReportResult').innerHTML=
+      '<div class="card" style="margin-top:14px;"><pre style="white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:14px;line-height:1.5;margin:0 0 14px;color:var(--txt);">'+esc(clReportText)+'</pre>'+
+      '<div class="req-btns"><button class="btn-share" style="flex:1;" onclick="clCopyReport()">Нусха</button>'+wa+'</div></div>';
+  }
+  function clCopyReport(){
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(clReportText).then(function(){toast('Нусха олинди');},function(){clCopyFb();});
+    } else clCopyFb();
+  }
+  function clCopyFb(){
+    var ta=document.createElement('textarea'); ta.value=clReportText; document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy'); toast('Нусха олинди');}catch(e){toast('Нусха олинмади',true);}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('clFrom').addEventListener('change',function(){ if(clPeriodVal==='range') clLoadOps(); });
+  document.getElementById('clTo').addEventListener('change',function(){ if(clPeriodVal==='range') clLoadOps(); });
+
+  /* ===== РЕГИСТРАЦИЯ SERVICE WORKER (PWA) ===== */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
+  /* ===== старт ===== */
+  apiCall('getClients',{},AUTH_TOKEN).then(function(list){ DB=list||[]; });
+  buildTabs();
 </script>
 </body>
 </html>

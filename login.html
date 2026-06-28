@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Касса">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1115">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Касса — Кириш</title>
+<style>
+  :root{--bg:#0f1115;--card:#181b22;--card2:#1f232c;--line:#2b3038;--txt:#e8eaed;--muted:#8b919c;--accent:#3ddc84;--minus:#ff6b6b;}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+  .box{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 24px;}
+  h1{font-size:22px;margin:0 0 4px;text-align:center;}
+  .sub{font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;}
+  label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px 2px;}
+  .field{margin-bottom:16px;}
+  input{width:100%;padding:14px 12px;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:16px;outline:none;}
+  input:focus{border-color:var(--accent);}
+  .btn{width:100%;padding:15px;background:var(--accent);color:#06210f;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;}
+  .btn:disabled{background:var(--line);color:var(--muted);}
+  .err{color:var(--minus);font-size:13px;text-align:center;margin-top:14px;min-height:18px;}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Касса</h1>
+  <div class="sub">Тизимга кириш</div>
+  <form id="loginForm" onsubmit="return false;" action="#" method="post">
+    <div class="field"><label>Логин</label><input type="text" id="login" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" placeholder="логин"></div>
+    <div class="field"><label>Парол</label><input type="password" id="pass" name="password" autocomplete="current-password" placeholder="парол"></div>
+    <button class="btn" id="btn" type="submit">Кириш</button>
+  </form>
+  <div class="err" id="err"></div>
+</div>
+<script>
+  var API_URL='https://script.google.com/macros/s/AKfycbw9xLU2d0_38dbVl2v7afk2CKn0JaJcVbPICYFtqJzYEBUbuxVPICqf5P-71Pn2KGRGCA/exec';
+  function apiCall(action,args,token){
+    return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:action,token:token||'',args:args||{}})}).then(function(r){return r.json();});
+  }
+
+  // если уже залогинен — сразу в приложение
+  if(localStorage.getItem('kassa_token')){ location.href='index.html'; }
+
+  document.getElementById('loginForm').addEventListener('submit', function(e){ e.preventDefault(); doLogin(); });
+  document.getElementById('btn').addEventListener('click', function(e){ e.preventDefault(); doLogin(); });
+  document.getElementById('login').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('pass').focus(); } });
+  document.getElementById('pass').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); doLogin(); } });
+
+  function doLogin(){
+    var login=document.getElementById('login').value.trim();
+    var pass=document.getElementById('pass').value.trim();
+    var err=document.getElementById('err'); err.textContent='';
+    if(!login||!pass){ err.textContent='Введите логин и пароль'; return; }
+    var btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='Кирилмоқда…';
+    apiCall('checkLogin',{login:login,password:pass},'').then(function(res){
+      if(res&&res.ok){
+        localStorage.setItem('kassa_token',res.token);
+        localStorage.setItem('kassa_role',res.role||'');
+        localStorage.setItem('kassa_name',res.name||'');
+        location.href='index.html';
+      } else {
+        btn.disabled=false; btn.textContent='Кириш';
+        err.textContent=(res&&res.error)||'Хато';
+      }
+    }).catch(function(){
+      btn.disabled=false; btn.textContent='Кириш';
+      err.textContent='Алоқа узилди';
+    });
+  }
+</script>
+</body>
+</html>
