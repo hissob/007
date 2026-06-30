@@ -1269,6 +1269,7 @@
   }
   /* ===== КУНЛИК (ежедневные отчёты) ===== */
   var dlDayVal='today', dlLangVal='uz', dlOpenName='', dlCache={};
+  var dlClients=[];   // список клиентов дня в памяти (чтобы не грузить заново)
   function dlDay(d){
     dlDayVal=d;
     document.getElementById('dlToday').classList.toggle('sel',d==='today');
@@ -1285,21 +1286,15 @@
   var dlReports={};
   function dlLoad(){
     document.getElementById('dlList').innerHTML='<div class="loading">Юкланмоқда…</div>';
-    function loadClients(){
-      apiCall('getDailyClients',{day:dlDayVal},AUTH_TOKEN).then(function(res){
-        if(!res||!res.ok){ document.getElementById('dlList').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
-        dlRender(res.clients||[]);
-      }).catch(function(){ document.getElementById('dlList').innerHTML='<div class="empty">Алоқа узилди</div>'; });
-    }
-    apiCall('getDailyReports',{day:dlDayVal,lang:dlLangVal},AUTH_TOKEN).then(function(rep){
-      dlReports=(rep&&rep.ok&&rep.reports)?rep.reports:{};
-      loadClients();
-    }).catch(function(){
-      dlReports={};
-      loadClients();
-    });
+    dlReports={};   // тексты заранее не грузим — строятся при раскрытии клиента
+    apiCall('getDailyClients',{day:dlDayVal},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ document.getElementById('dlList').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      dlClients=res.clients||[];     // сохраняем в память
+      dlRender(dlClients);
+    }).catch(function(){ document.getElementById('dlList').innerHTML='<div class="empty">Алоқа узилди</div>'; });
   }
   function dlRender(clients){
+    clients=clients||dlClients;     // если не передали — из памяти
     var box=document.getElementById('dlList');
     if(!clients.length){ box.innerHTML='<div class="empty">'+(dlDayVal==='yesterday'?'Кеча сделка бўлмаган':'Бугун сделка йўқ')+'</div>'; return; }
     var active=clients.filter(function(c){return !c.sent;});
@@ -1325,7 +1320,7 @@
       '<div class="nm" style="font-size:15px;font-weight:600;">'+esc(c.name)+'</div>'+
       '<div class="req-meta" style="margin-top:3px;">'+c.count+' та сделка'+(c.sent?' · ✓ юборилди':'')+'</div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<div onclick="dlToggle(\''+safeName+'\')" style="width:38px;height:38px;border-radius:10px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;cursor:pointer;">'+(op?'▴':'▾')+'</div>'+
+        '<div onclick="dlToggle(\''+safeName+'\')" style="width:38px;height:38px;border-radius:10px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:'+(op?'var(--accent)':'var(--muted)')+';font-size:18px;cursor:pointer;">👁</div>'+
         dlWaButton(c)+
       '</div></div>'+
       '<div id="dlBody-'+esc(c.name).replace(/[^a-zA-Zа-яА-Я0-9]/g,'_')+'" '+(op?'':'class="hidden"')+'></div>'+
@@ -1393,14 +1388,17 @@
   }
   function dlSent(name){
     var period=(dlDayVal==='yesterday')?'Кеча':'Бугун';
+    // 1) мгновенно помечаем в памяти и перерисовываем (клиент уходит в Юборилди)
+    for(var i=0;i<dlClients.length;i++){
+      if(dlClients[i].name===name){ dlClients[i].sent=true; break; }
+    }
+    if(dlOpenName===name) dlOpenName='';   // свернуть карточку
+    dlRender(dlClients);
+    // 2) пишем в лог на сервер фоном (интерфейс не ждёт)
     apiCall('logReportSent',{name:name,reportDay:dlDayKey(),period:period,lang:dlLangVal,source:'Кунлик'},AUTH_TOKEN);
   }
-  document.addEventListener('visibilitychange', function(){
-    if(!document.hidden){
-      var pane=document.getElementById('repPane-daily');
-      if(pane && !pane.classList.contains('hidden')) dlLoad();
-    }
-  });
+  // возврат в приложение из WhatsApp список НЕ перезагружает —
+  // статус «отправлено» уже проставлен мгновенно в dlSent.
 
   /* ===== ОТЧЁТ ПО КЛИЕНТУ ===== */
   var crLangVal='uz', crPeriodVal='today', crText='', crPhone='';
