@@ -262,6 +262,7 @@
         </div>
       </div>
       <div class="field"><label>Изоҳ</label><input type="text" id="mNote" placeholder="ихтиёрий"></div>
+      <div class="field" id="mOpDateField"><label>Сана (бўш = бугун)</label><input type="date" id="mOpDate"></div>
       <button class="submit" id="mSubmit" onclick="mSubmit()">Сақлаш</button>
     </div>
     <div class="card feed">
@@ -304,6 +305,7 @@
       </div>
       <div class="field"><label>Рубль (фактик)</label><input type="text" id="uRub" class="money" placeholder="0" inputmode="numeric" oninput="uRubEdit()"><div class="fact-hint" id="uHint">Доллар ва курсни киритинг — рубль таклиф этилади.</div></div>
       <div class="calc-box"><div id="uCalcBox" style="font-size:13px;color:var(--muted)">Амал танланг, доллар ва курс киритинг</div></div>
+      <div class="field" id="uOpDateField"><label>Сана (бўш = бугун)</label><input type="date" id="uOpDate"></div>
       <button class="submit" id="uSubmit" onclick="uSubmit()">Сделка яратиш</button>
     </div>
     <div class="card feed"><h2>История (Узбекистан) · 2 кун</h2>
@@ -342,6 +344,7 @@
       </div>
       <div class="field"><label>Рубль (фактик)</label><input type="text" id="gRub" class="money" placeholder="0" inputmode="numeric" oninput="gRubEdit()"><div class="fact-hint" id="gHint">Доллар ва курсни киритинг — рубль таклиф этилади.</div></div>
       <div class="calc-box"><div id="gCalcBox" style="font-size:13px;color:var(--muted)">Амал танланг, доллар ва курс киритинг</div></div>
+      <div class="field" id="gOpDateField"><label>Сана (бўш = бугун)</label><input type="date" id="gOpDate"></div>
       <button class="submit" id="gSubmit" onclick="gSubmit()">Сделка яратиш</button>
     </div>
     <div class="card feed"><h2>История · 2 кун</h2>
@@ -679,7 +682,7 @@
   }
   function mSubmit(){
     if(!mAction){toast('Амал танланг',true); return;}
-    var p={action:mAction,note:document.getElementById('mNote').value.trim()};
+    var p={action:mAction,note:document.getElementById('mNote').value.trim(),opDate:document.getElementById('mOpDate').value||''};
     if(mAction==='obmen'){
       var a=moneyVal('mExA'),b=moneyVal('mExB');
       if(a<=0||b<=0){toast('Суммаларни тўлдиринг',true); return;}
@@ -707,7 +710,7 @@
   }
   function mReset(){
     document.querySelectorAll('#scr-moscow .act-btn').forEach(function(b){b.classList.remove('sel');}); mAction=null;
-    ['mName','mRub','mUsd','mNote','mExA','mExB','mRate'].forEach(function(id){var e=document.getElementById(id); if(e)e.value='';});
+    ['mName','mRub','mUsd','mNote','mExA','mExB','mRate','mOpDate'].forEach(function(id){var e=document.getElementById(id); if(e)e.value='';});
     document.getElementById('mUsdSwitch').checked=false; document.getElementById('mUsdField').classList.add('hidden');
     document.getElementById('mNameField').classList.remove('hidden'); document.getElementById('mRubField').classList.remove('hidden');
     document.getElementById('mUsdToggleField').classList.remove('hidden'); document.getElementById('mExchField').classList.add('hidden'); mCalcRate();
@@ -856,7 +859,8 @@
       if(usd<=0){toast('Доллар киритинг',true); return;}
       if(rub<=0){toast('Рубль киритинг',true); return;}
       var p={action:st.action,region:getRegionName(),name:name,usd:usd,rate:rateRaw,rub:rub,
-        toWhom:id('ToWhom').value.trim(),phone:id('Phone').value.trim(),memo:id('Memo').value.trim()};
+        toWhom:id('ToWhom').value.trim(),phone:id('Phone').value.trim(),memo:id('Memo').value.trim(),
+        opDate:(id('OpDate')?id('OpDate').value:'')||''};
 
       var showProfit=(USER_ROLE==='operator2'||USER_ROLE==='admin')&&st.action==='berdim';
       var rows=[];
@@ -883,7 +887,7 @@
 
     function reset(){
       var p=document.getElementById('scr-'+(pfx==='u'?'uzb':'region')); p.querySelectorAll('.act-btn').forEach(function(b){b.classList.remove('sel');}); st.action=null; st.rubEdited=false;
-      ['Name','Usd'+(pfx==='g'?'In':''),'Rate','Rub','ToWhom','Phone','Memo'].forEach(function(s){var e=id(s); if(e)e.value='';});
+      ['Name','Usd'+(pfx==='g'?'In':''),'Rate','Rub','ToWhom','Phone','Memo','OpDate'].forEach(function(s){var e=id(s); if(e)e.value='';});
       id('CalcBox').innerHTML='Амал танланг, доллар ва курс киритинг'; hint();
     }
     function refreshBalance(){
@@ -1225,6 +1229,8 @@
       var rateTxt=it.rate?(' · курс '+String(it.rate).replace('.',',')):'';
       var canEdit=(it.action==='Олдим'||it.action==='Бердим');
       var editBtn=canEdit?'<button class="btn-share" style="padding:9px 12px;" onclick=\'aEdit('+JSON.stringify(it).replace(/'/g,"&#39;")+')\'>Исправить</button>':'';
+      var dateBtn='<button class="btn-share" style="padding:9px 12px;" onclick="aChangeDate(\''+esc(it.id)+'\')">📅</button>';
+      editBtn=dateBtn+editBtn;
       h+='<div class="cancel-item"><div class="info"><div class="t">'+esc(it.action)+' · '+esc(it.name||'—')+' · '+(it.usd?'$'+fmt(it.usd):'')+(it.rub?' '+fmt(it.rub)+'₽':'')+rateTxt+'</div><div class="m">'+it.time+' · '+esc(it.region||'')+' · '+esc(it.operator)+' · '+esc(it.status)+'</div></div><div style="display:flex;gap:6px;flex:0 0 auto;">'+editBtn+'<button class="btn-cancel" data-id="'+esc(it.id)+'" onclick="aCancel(this)">Отменить</button></div></div>';
     });
     box.innerHTML=h;
@@ -1238,6 +1244,16 @@
         else{btn.disabled=false; btn.textContent='Отменить'; toast(res.error||'Ошибка',true);}
       }).catch(function(){btn.disabled=false; btn.textContent='Отменить'; toast('Сбой связи',true);});
     });
+  }
+  function aChangeDate(id){
+    var d=prompt('Янги сана (гггг-мм-дд):','');
+    if(d===null) return;
+    d=String(d).trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){toast('Формат: гггг-мм-дд',true); return;}
+    apiCall('changeOperationDate',{opId:id,newDate:d},AUTH_TOKEN).then(function(res){
+      if(res.ok){showOk('Сана ўзгартирилди',d+' 23:55'); aLoadCancel();}
+      else toast(res.error||'Хато',true);
+    }).catch(function(){toast('Алоқа узилди',true);});
   }
   function aEdit(it){
     askConfirm('Исправить операцию? Старая отменится, откроется форма с её данными.', function(){
@@ -1705,6 +1721,9 @@
   }
 
   /* ===== старт ===== */
+  if(USER_ROLE!=='admin'){
+    ['mOpDateField','uOpDateField','gOpDateField'].forEach(function(i){var e=document.getElementById(i); if(e)e.style.display='none';});
+  }
   apiCall('getClients',{},AUTH_TOKEN).then(function(list){ DB=list||[]; });
   buildTabs();
 </script>
