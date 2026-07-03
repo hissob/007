@@ -989,10 +989,20 @@
   var REG=makeRegionEngine('g',function(){return gCurRegion;});
   function gPick(el,a){REG.pick(el,a);} function gCalc(){REG.calc();} function gRubEdit(){REG.rubEdit();}
   function gSubmit(){REG.submit();}
-  function gOpen(){
-    if(!gCurRegion) return;
-    apiCall('openRegion',{region:gCurRegion},AUTH_TOKEN).then(function(res){
+  function gOpen(init){
+    if(!init && !gCurRegion) return;
+    apiCall('openRegion',{region:gCurRegion||''},AUTH_TOKEN).then(function(res){
       if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
+      if(res.regions){
+        gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан';});
+        if(res.region) gCurRegion=res.region;
+        gRenderRegionTabs();
+        if(!gRegList.length){
+          document.getElementById('gFeed').innerHTML='<div class="empty">Создайте регион кнопкой +</div>';
+          document.getElementById('gReqList').innerHTML='';
+          return;
+        }
+      }
       var b=res.balance||{};
       REG.setAvg(b.avg||0);
       document.getElementById('gBalUsd').textContent='$ '+fmt(b.usd||0);
@@ -1012,19 +1022,7 @@
   }
   function gInitRegions(){
     updateExecAllVisibility();
-    apiCall('getRegions',{},AUTH_TOKEN).then(function(list){
-      var arr=(list||[]).filter(function(r){return r!=='Узбекистан';});
-      gRegList=arr;
-      var keep=(gCurRegion && arr.indexOf(gCurRegion)>-1)?gCurRegion:(arr[0]||'');
-      gCurRegion=keep;
-      gRenderRegionTabs();
-      if(!arr.length){
-        document.getElementById('gFeed').innerHTML='<div class="empty">Создайте регион кнопкой +</div>';
-        document.getElementById('gReqList').innerHTML='';
-        return;
-      }
-      gOpen();
-    });
+    gOpen(true);   // один вызов: openRegion сам вернёт список регионов
   }
   function gRenderRegionTabs(){
     var box=document.getElementById('gRegionTabs'); var h='';
