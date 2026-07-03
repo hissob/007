@@ -440,6 +440,13 @@
         <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Месячный пересчёт прибыли по средневзвешенному курсу (Σруб/Σ$). Перезаписывает прибыль всех продаж и средний курс регионов. Используй для сверки с таблицей.</div>
         <button class="submit purple" id="rcMonthSubmit" onclick="rcMonthSubmit()">Пересчитать прибыль (месяц)</button>
       </div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">📦 Закрытие месяца: детали периода → архив, базы регионов и долги клиентов сворачиваются, прибыль → псевдоклиент. НЕОБРАТИМО. Сначала превью — кнопка закрытия появится только при farq ДО = ПОСЛЕ.</div>
+        <div class="field"><label>Граница (включительно)</label><input type="date" id="meDate"></div>
+        <button class="submit" id="mePreviewBtn" onclick="mePreview()">Превью закрытия</button>
+        <div id="meResult" style="display:none; margin-top:12px; font-size:12px; line-height:1.45; white-space:pre-wrap; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:12px; max-height:320px; overflow:auto;"></div>
+        <button class="submit" id="meCloseBtn" style="display:none; margin-top:12px; background:#c0392b;" onclick="meClose()">⚠️ ЗАКРЫТЬ МЕСЯЦ (необратимо)</button>
+      </div>
     </div>
   </div>
 
@@ -562,6 +569,9 @@
     localStorage.removeItem('kassa_name');
     location.href='login.html';
   }
+  // локальный кэш экранов: показать мгновенно, свежее подтянуть фоном
+  function cGet(k){try{return JSON.parse(localStorage.getItem('c_'+k)||'null');}catch(e){return null;}}
+  function cPut(k,v){try{localStorage.setItem('c_'+k,JSON.stringify(v));}catch(e){}}
   var DB=[];
   ['opName','opNameU','opNameG','opNameR','opNameRep'].forEach(function(id){var e=document.getElementById(id); if(e)e.textContent=USER_NAME||'—';});
 
@@ -716,20 +726,33 @@
     document.getElementById('mUsdToggleField').classList.remove('hidden'); document.getElementById('mExchField').classList.add('hidden'); mCalcRate();
   }
   function mRefreshBalance(){apiCall('getMoscowBalance',{},AUTH_TOKEN).then(function(b){document.getElementById('mskRub').textContent=fmt(b.rub)+' ₽'; document.getElementById('mskUsd').textContent='$ '+fmt(b.usd);});}
+  // фильтр ленты по выбранному дню: "сегодня" в datetime — только HH:mm (без точки)
+  function mFilterFeed(items){
+    items=items||[];
+    return items.filter(function(it){
+      var hasDate=String(it.datetime).indexOf('.')>-1;
+      return (mFeedPeriodVal==='yesterday') ? hasDate : !hasDate;
+    });
+  }
+  function mApply(res){
+    var b=res.balance||{};
+    document.getElementById('mskRub').textContent=fmt(b.rub||0)+' ₽';
+    document.getElementById('mskUsd').textContent='$ '+fmt(b.usd||0);
+    mRenderFeed(mFilterFeed(res.feed));
+  }
   function mOpen(){
+    var c=cGet('moscow'); if(c) mApply(c);           // мгновенно из кэша
     apiCall('openMoscow',{},AUTH_TOKEN).then(function(res){
-      if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
-      var b=res.balance||{};
-      document.getElementById('mskRub').textContent=fmt(b.rub||0)+' ₽';
-      document.getElementById('mskUsd').textContent='$ '+fmt(b.usd||0);
-      mRenderFeed(res.feed||[]);
-    }).catch(function(){ toast('Алоқа узилди',true); });
+      if(!res||!res.ok){ if(!c) toast((res&&res.error)||'Хато',true); return; }
+      cPut('moscow',res); mApply(res);               // свежее — поверх
+    }).catch(function(){ if(!c) toast('Алоқа узилди',true); });
   }
   var mFeedPeriodVal='today';
   function mFeedPeriod(p){
     mFeedPeriodVal=p;
     document.getElementById('mFeedToday').classList.toggle('sel',p==='today');
     document.getElementById('mFeedYesterday').classList.toggle('sel',p==='yesterday');
+    var c=cGet('moscow'); if(c) mRenderFeed(mFilterFeed(c.feed));   // переключение дня — мгновенно
     mRefreshFeed();
   }
   function mRefreshFeed(){apiCall('getMoscowFeed',{limit:50,period:mFeedPeriodVal},AUTH_TOKEN).then(mRenderFeed);}
@@ -759,7 +782,7 @@
     var parts=[];
     if(it.rub!==0) parts.push(fmt(Math.abs(it.rub))+' ₽');
     if(it.usd!==0) parts.push('$'+fmt(Math.abs(it.usd)));
-    return sign+' '+it.name+'  '+parts.join(' · ')+'  '+it.datetime;
+    return sign+' '+parts.join(' · ')+'  '+it.name+'  '+it.datetime;
   }
   // поделиться одной сделкой
   function mShareDeal(idx){
@@ -966,10 +989,7 @@
   var UZB=makeRegionEngine('u',function(){return 'Узбекистан';});
   function uPick(el,a){UZB.pick(el,a);} function uCalc(){UZB.calc();} function uRubEdit(){UZB.rubEdit();}
   function uSubmit(){UZB.submit();} function uRefreshBalance(){UZB.refreshBalance();} function uRefreshFeed(){UZB.refreshFeed();} function uLoadReq(){UZB.loadReq();}
-  function uOpen(){
-    updateExecAllVisibility();
-    apiCall('openUzb',{},AUTH_TOKEN).then(function(res){
-      if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
+  function uApply(res){
       var b=res.balance||{};
       UZB.setAvg(b.avg||0);
       document.getElementById('uBalUsd').textContent='$ '+fmt(b.usd||0);
@@ -981,7 +1001,14 @@
       document.getElementById('uPendCnt').textContent=(s.count||0)+' та';
       UZB.renderFeed(res.feed||[]);
       UZB.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
-    }).catch(function(){ toast('Алоқа узилди',true); });
+  }
+  function uOpen(){
+    updateExecAllVisibility();
+    var c=cGet('uzb'); if(c) uApply(c);
+    apiCall('openUzb',{},AUTH_TOKEN).then(function(res){
+      if(!res||!res.ok){ if(!c) toast((res&&res.error)||'Хато',true); return; }
+      cPut('uzb',res); uApply(res);
+    }).catch(function(){ if(!c) toast('Алоқа узилди',true); });
   }
 
   /* Регионы — регион выбирается */
@@ -989,10 +1016,29 @@
   var REG=makeRegionEngine('g',function(){return gCurRegion;});
   function gPick(el,a){REG.pick(el,a);} function gCalc(){REG.calc();} function gRubEdit(){REG.rubEdit();}
   function gSubmit(){REG.submit();}
+  function gApplyCached(res){
+    if(res.regions){
+      gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан';});
+      gRenderRegionTabs();
+    }
+    var b=res.balance||{};
+    REG.setAvg(b.avg||0);
+    document.getElementById('gBalUsd').textContent='$ '+fmt(b.usd||0);
+    document.getElementById('gBalAvg').textContent='ўрт. курс '+(Math.round((b.avg||0)*100)/100).toFixed(2).replace('.',',');
+    document.getElementById('gBalProfit').textContent='Прибыль: '+((b.profit||0)>=0?'+':'')+fmt(b.profit||0)+' ₽';
+    var s=res.summary||{};
+    document.getElementById('gOnHand').textContent=((s.onHand||0)<0?'−$':'$ ')+fmt(Math.abs(s.onHand||0));
+    document.getElementById('gPending').textContent=((s.pending||0)<0?'−$':'+$')+fmt(Math.abs(s.pending||0));
+    document.getElementById('gPendCnt').textContent=(s.count||0)+' та';
+    REG.renderFeed(res.feed||[]);
+    REG.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
+  }
   function gOpen(init){
     if(!init && !gCurRegion) return;
+    var c=gCurRegion?cGet('reg_'+gCurRegion):null; if(c) gApplyCached(c);
     apiCall('openRegion',{region:gCurRegion||''},AUTH_TOKEN).then(function(res){
-      if(!res||!res.ok){ toast((res&&res.error)||'Хато',true); return; }
+      if(!res||!res.ok){ if(!c) toast((res&&res.error)||'Хато',true); return; }
+      if(res.region) cPut('reg_'+res.region,res);
       if(res.regions){
         gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан';});
         if(res.region) gCurRegion=res.region;
@@ -1014,7 +1060,7 @@
       document.getElementById('gPendCnt').textContent=(s.count||0)+' та';
       REG.renderFeed(res.feed||[]);
       REG.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
-    }).catch(function(){ toast('Алоқа узилди',true); });
+    }).catch(function(){ if(!c) toast('Алоқа узилди',true); });
   }
   var gRegList=[];
   function regLetter(name){
@@ -1252,6 +1298,36 @@
       if(res.ok){showOk('Сана ўзгартирилди',d+' 23:55'); aLoadCancel();}
       else toast(res.error||'Хато',true);
     }).catch(function(){toast('Алоқа узилди',true);});
+  }
+  var meBoundaryOk='';
+  function mePreview(){
+    var d=document.getElementById('meDate').value;
+    if(!d){toast('Выберите дату-границу',true); return;}
+    var btn=document.getElementById('mePreviewBtn'); btn.disabled=true; btn.textContent='Считаем…';
+    document.getElementById('meCloseBtn').style.display='none'; meBoundaryOk='';
+    apiCall('previewMonthEnd',{boundary:d},AUTH_TOKEN).then(function(res){
+      btn.disabled=false; btn.textContent='Превью закрытия';
+      var box=document.getElementById('meResult'); box.style.display='block';
+      if(!res.ok){ box.textContent=res.error||'Ошибка'; return; }
+      box.textContent=res.text||'';
+      if(res.archiveExists){ toast('Месяц уже закрыт',true); return; }
+      if(res.diff===0){ meBoundaryOk=d; document.getElementById('meCloseBtn').style.display='block'; }
+      else toast('farq расходится — закрывать нельзя',true);
+    }).catch(function(){ btn.disabled=false; btn.textContent='Превью закрытия'; toast('Алоқа узилди',true); });
+  }
+  function meClose(){
+    if(!meBoundaryOk) return;
+    askConfirm('ЗАКРЫТЬ месяц по границе '+meBoundaryOk+'? Действие необратимо.', function(){
+      var btn=document.getElementById('meCloseBtn'); btn.disabled=true; btn.textContent='Закрываем…';
+      apiCall('runMonthEndClose',{boundary:meBoundaryOk},AUTH_TOKEN).then(function(res){
+        btn.disabled=false; btn.textContent='⚠️ ЗАКРЫТЬ МЕСЯЦ (необратимо)';
+        if(res.ok){
+          btn.style.display='none';
+          document.getElementById('meResult').textContent='✅ ЗАКРЫТО. Архив: '+res.archiveName+' · строк '+res.archived+' · прибыль '+fmt(res.profitToClient)+' ₽ → '+res.profitClient+' · клиентов свёрнуто '+res.clientsFolded+' · farq после: '+fmt(res.farqAfter);
+          showOk('Месяц закрыт',res.archiveName);
+        } else toast(res.error||'Ошибка',true);
+      }).catch(function(){ btn.disabled=false; toast('Алоқа узилди',true); });
+    });
   }
   function aEdit(it){
     askConfirm('Исправить операцию? Старая отменится, откроется форма с её данными.', function(){
