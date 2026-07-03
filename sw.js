@@ -1,15 +1,15 @@
 // ============================================================
-//  Service Worker для PWA «Касса» — v2
-//  СТРАТЕГИЯ:
-//   - HTML (index/login) — СНАЧАЛА СЕТЬ, кэш только как офлайн-запас.
-//     Иначе телефон вечно показывает старую версию из кэша.
-//   - статика (иконки, манифест) — сначала кэш (им обновляться незачем).
+//  Service Worker для PWA «Касса» — v3
+//  СТРАТЕГИЯ: stale-while-revalidate для HTML.
+//   - открытие МГНОВЕННОЕ из кэша (старт не ждёт сеть!);
+//   - свежий HTML качается В ФОНЕ и кладётся в кэш —
+//     следующий запуск уже на новой версии;
+//   - статика (иконки, манифест) — из кэша;
 //   - Apps Script — всегда сеть, мимо кэша.
-//  Имя кэша поднято до kassa-v2: activate снесёт старый kassa-v1
-//  на всех застрявших устройствах.
+//  kassa-v3: activate снесёт v1/v2 на всех устройствах.
 // ============================================================
 
-var CACHE = 'kassa-v2';   // ← поднимать при смене стратегии кэширования
+var CACHE = 'kassa-v3';
 var SHELL = [
   './',
   './index.html',
@@ -20,7 +20,6 @@ var SHELL = [
   './icon-512.png'
 ];
 
-// установка: кладём оболочку в кэш (запас на офлайн)
 self.addEventListener('install', function(e){
   e.waitUntil(
     caches.open(CACHE).then(function(c){ return c.addAll(SHELL); })
@@ -28,7 +27,6 @@ self.addEventListener('install', function(e){
   self.skipWaiting();
 });
 
-// активация: чистим ВСЕ старые версии кэша (kassa-v1 и т.д.)
 self.addEventListener('activate', function(e){
   e.waitUntil(
     caches.keys().then(function(keys){
@@ -40,7 +38,6 @@ self.addEventListener('activate', function(e){
   self.clients.claim();
 });
 
-// HTML-запрос? (открытие страницы или сам .html файл)
 function isHtml_(req){
   if(req.mode === 'navigate') return true;
   var url = req.url.split('?')[0];
@@ -57,17 +54,21 @@ self.addEventListener('fetch', function(e){
   if(e.request.method !== 'GET'){ return; }
 
   if(isHtml_(e.request)){
-    // ===== HTML: СНАЧАЛА СЕТЬ =====
+    // ===== HTML: МГНОВЕННО ИЗ КЭША + ФОНОВОЕ ОБНОВЛЕНИЕ =====
     e.respondWith(
-      fetch(e.request).then(function(resp){
-        // свежий HTML кладём в кэш как офлайн-запас
-        var copy = resp.clone();
-        caches.open(CACHE).then(function(c){ c.put(e.request, copy); }).catch(function(){});
-        return resp;
-      }).catch(function(){
-        // сети нет — отдаём из кэша (последняя скачанная версия)
-        return caches.match(e.request).then(function(hit){
-          return hit || caches.match('./index.html');
+      caches.match(e.request).then(function(hit){
+        // фоновая догрузка свежей версии в кэш (не блокирует ответ)
+        var refresh = fetch(e.request).then(function(resp){
+          if(resp && resp.ok){
+            var copy = resp.clone();
+            caches.open(CACHE).then(function(c){ c.put(e.request, copy); }).catch(function(){});
+          }
+          return resp;
+        }).catch(function(){ return null; });
+
+        // есть в кэше — отдаём сразу; нет — ждём сеть (первый запуск)
+        return hit || refresh.then(function(resp){
+          return resp || caches.match('./index.html');
         });
       })
     );
