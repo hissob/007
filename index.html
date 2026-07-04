@@ -441,6 +441,11 @@
         <button class="submit purple" id="rcMonthSubmit" onclick="rcMonthSubmit()">Пересчитать прибыль (месяц)</button>
       </div>
       <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">👥 Сверка клиентов: Операции ↔ База. Покажет, кого нет в Базе (не попадает в подсказки) и кто в Базе без операций. Обновляет лист «Сверка_клиентов» в таблице. Ничего не меняет в данных.</div>
+        <button class="submit" id="csBtn" onclick="csRun()">Сверить клиентов</button>
+        <div id="csResult" style="display:none; margin-top:12px; font-size:12px; line-height:1.45; white-space:pre-wrap; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:12px; max-height:320px; overflow:auto;"></div>
+      </div>
+      <div class="card">
         <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">📦 Закрытие месяца: детали периода → архив, базы регионов и долги клиентов сворачиваются, прибыль → псевдоклиент. НЕОБРАТИМО. Сначала превью — кнопка закрытия появится только при farq ДО = ПОСЛЕ.</div>
         <div class="field"><label>Граница (включительно)</label><input type="date" id="meDate"></div>
         <button class="submit" id="mePreviewBtn" onclick="mePreview()">Превью закрытия</button>
@@ -709,7 +714,7 @@
     var btn=document.getElementById('mSubmit'); btn.disabled=true; btn.textContent='Ёзилмоқда…';
     apiCall('saveMoscow',{payload:p},AUTH_TOKEN).then(function(res){
       btn.disabled=false; btn.textContent='Сақлаш';
-      if(res.ok){ if(!res.dup) mShowOk(p); mReset(); mRefreshBalance(); mRefreshFeed(); } else toast(res.error||'Хато',true);
+      if(res.ok){ if(!res.dup) mShowOk(p); mReset(); mAfterSave(); } else toast(res.error||'Хато',true);
     }).catch(function(){btn.disabled=false; btn.textContent='Сақлаш'; toast('Алоқа узилди',true);});
   }
   function mShowOk(p){
@@ -740,12 +745,24 @@
     document.getElementById('mskUsd').textContent='$ '+fmt(b.usd||0);
     mRenderFeed(mFilterFeed(res.feed));
   }
+  // счётчик поколений запросов экрана Москвы: применяем ТОЛЬКО последний ответ.
+  // Лечит гонку: поздний ответ «Кеча» перетирал уже показанный «Бугун».
+  var mGen=0;
   function mOpen(){
     var c=cGet('moscow'); if(c) mApply(c);           // мгновенно из кэша
+    var g=++mGen;
     apiCall('openMoscow',{},AUTH_TOKEN).then(function(res){
+      if(g!==mGen) return;                           // пришёл устаревший ответ — выбрасываем
       if(!res||!res.ok){ if(!c) toast((res&&res.error)||'Хато',true); return; }
-      cPut('moscow',res); mApply(res);               // свежее — поверх
-    }).catch(function(){ if(!c) toast('Алоқа узилди',true); });
+      cPut('moscow',res); mApply(res);               // свежее — поверх (фильтр по текущей кнопке внутри mApply)
+    }).catch(function(){ if(g===mGen && !c) toast('Алоқа узилди',true); });
+  }
+  // после сохранения: период всегда на «Бугун» + весь экран одним запросом (openMoscow)
+  function mAfterSave(){
+    mFeedPeriodVal='today';
+    document.getElementById('mFeedToday').classList.add('sel');
+    document.getElementById('mFeedYesterday').classList.remove('sel');
+    mOpen();
   }
   var mFeedPeriodVal='today';
   function mFeedPeriod(p){
@@ -755,7 +772,13 @@
     var c=cGet('moscow'); if(c) mRenderFeed(mFilterFeed(c.feed));   // переключение дня — мгновенно
     mRefreshFeed();
   }
-  function mRefreshFeed(){apiCall('getMoscowFeed',{limit:50,period:mFeedPeriodVal},AUTH_TOKEN).then(mRenderFeed);}
+  function mRefreshFeed(){
+    var g=++mGen;
+    apiCall('getMoscowFeed',{limit:50,period:mFeedPeriodVal},AUTH_TOKEN).then(function(items){
+      if(g!==mGen) return;                           // устаревший ответ — мимо
+      mRenderFeed(mFilterFeed(items));               // рендер через ТЕКУЩИЙ фильтр на момент ответа
+    });
+  }
   var mFeedItems=[];   // сделки текущей ленты Москвы в памяти (для «поделиться»)
   function mRenderFeed(items){
     mFeedItems=items||[];
@@ -903,7 +926,7 @@
       var btn=id('Submit'); btn.disabled=true; btn.textContent='Яратилмоқда…';
       apiCall('saveRegionRequest',{payload:p},AUTH_TOKEN).then(function(res){
         btn.disabled=false; btn.textContent='Сделка яратиш';
-        if(res.ok){ if(!res.dup) showOk('Сделка яратилди',esc(p.name)+' · $'+fmt(p.usd)+' · '+fmt(p.rub)+' ₽'); reset(); refreshBalance(); refreshFeed(); loadReq(); }
+        if(res.ok){ if(!res.dup) showOk('Сделка яратилди',esc(p.name)+' · $'+fmt(p.usd)+' · '+fmt(p.rub)+' ₽'); reset(); afterSave(); }
         else toast(res.error||'Хато',true);
       }).catch(function(){btn.disabled=false; btn.textContent='Сделка яратиш'; toast('Алоқа узилди',true);});
     }
@@ -913,14 +936,44 @@
       ['Name','Usd'+(pfx==='g'?'In':''),'Rate','Rub','ToWhom','Phone','Memo','OpDate'].forEach(function(s){var e=id(s); if(e)e.value='';});
       id('CalcBox').innerHTML='Амал танланг, доллар ва курс киритинг'; hint();
     }
+    // счётчик поколений запросов экрана: применяем только последний ответ
+    // (гонка: поздний ответ старого периода/региона перетирал свежие данные)
+    st.gen=0;
+    function gen(){ return ++st.gen; }
+    function genOk(g){ return g===st.gen; }
+    // фильтр ленты по кнопке периода НА МОМЕНТ ОТВЕТА (как mFilterFeed у Москвы):
+    // "сегодня" в datetime — HH:mm без точки, "вчера" — dd.MM HH:mm
+    function filterFeed(items){
+      items=items||[];
+      var p=st.feedPeriod;
+      if(!p||p==='week') return items;   // переключателя нет/неактивен — лента как есть (2 дня)
+      return items.filter(function(it){
+        var hasDate=String(it.datetime).indexOf('.')>-1;
+        return (p==='yesterday') ? hasDate : !hasDate;
+      });
+    }
+    // после сохранения/исполнения: период на «Бугун» (если переключатель есть)
+    // + весь экран одним запросом вместо пачки refresh
+    function afterSave(){
+      var t=document.getElementById(pfx+'FeedToday');
+      if(t){
+        st.feedPeriod='today'; t.classList.add('sel');
+        var y=document.getElementById(pfx+'FeedYesterday'); if(y)y.classList.remove('sel');
+        var w=document.getElementById(pfx+'FeedWeek'); if(w)w.classList.remove('sel');
+      }
+      if(pfx==='u') uOpen(); else gOpen();
+    }
     function refreshBalance(){
+      var g=gen();
       apiCall('getRegionBalance',{region:getRegionName()},AUTH_TOKEN).then(function(b){
+        if(!genOk(g)) return;
         st.avg=b.avg||0;
         id('BalUsd').textContent='$ '+fmt(b.usd);
         id('BalAvg').textContent='ўрт. курс '+(Math.round((b.avg||0)*100)/100).toFixed(2).replace('.',',');
         id('BalProfit').textContent='Прибыль: '+(b.profit>=0?'+':'')+fmt(b.profit)+' ₽';
       });
       apiCall('getExecutorSummary',{region:getRegionName()},AUTH_TOKEN).then(function(s){
+        if(!genOk(g)) return;
         var oh=id('OnHand'), pd=id('Pending'), pc=id('PendCnt');
         if(oh) oh.textContent=(s.onHand<0?'−$':'$ ')+fmt(Math.abs(s.onHand));
         if(pd) pd.textContent=(s.pending<0?'−$':'+$')+fmt(Math.abs(s.pending));
@@ -934,7 +987,13 @@
       document.getElementById(pfx+'FeedWeek').classList.toggle('sel',p==='week');
       refreshFeed();
     }
-    function refreshFeed(){apiCall('getRegionFeed',{region:getRegionName(),limit:12,period:st.feedPeriod||'today'},AUTH_TOKEN).then(renderFeed);}
+    function refreshFeed(){
+      var g=gen();
+      apiCall('getRegionFeed',{region:getRegionName(),limit:12,period:st.feedPeriod||'today'},AUTH_TOKEN).then(function(items){
+        if(!genOk(g)) return;            // устаревший ответ — мимо
+        renderFeed(items);
+      });
+    }
     function renderFeed(items){
       var box=id('Feed');
       if(!items||!items.length){box.innerHTML='<div class="loading">Сделка йўқ</div>'; return;}
@@ -947,7 +1006,13 @@
       });
       box.innerHTML=h;
     }
-    function loadReq(){ apiCall('getRegionRequests',{region:getRegionName()},AUTH_TOKEN).then(renderReq); }
+    function loadReq(){
+      var g=gen();
+      apiCall('getRegionRequests',{region:getRegionName()},AUTH_TOKEN).then(function(res){
+        if(!genOk(g)) return;
+        renderReq(res);
+      });
+    }
     function renderReq(res){
       var box=id('ReqList');
       if(!res||!res.ok){box.innerHTML='<div class="empty">'+((res&&res.error)||'Нет доступа')+'</div>'; return;}
@@ -982,7 +1047,7 @@
       hint(); render();
     }
     function setAvg(a){ st.avg=a||0; }
-    return {pick:pick,calc:calc,rubEdit:rubEdit,submit:submit,refreshBalance:refreshBalance,refreshFeed:refreshFeed,loadReq:loadReq,renderReq:renderReq,renderFeed:renderFeed,setEdit:setEdit,feedPeriod:feedPeriod,setAvg:setAvg};
+    return {pick:pick,calc:calc,rubEdit:rubEdit,submit:submit,refreshBalance:refreshBalance,refreshFeed:refreshFeed,loadReq:loadReq,renderReq:renderReq,renderFeed:renderFeed,setEdit:setEdit,feedPeriod:feedPeriod,setAvg:setAvg,gen:gen,genOk:genOk,filterFeed:filterFeed,afterSave:afterSave};
   }
 
   /* Узбекистан — регион фиксированный */
@@ -999,16 +1064,18 @@
       document.getElementById('uOnHand').textContent=((s.onHand||0)<0?'−$':'$ ')+fmt(Math.abs(s.onHand||0));
       document.getElementById('uPending').textContent=((s.pending||0)<0?'−$':'+$')+fmt(Math.abs(s.pending||0));
       document.getElementById('uPendCnt').textContent=(s.count||0)+' та';
-      UZB.renderFeed(res.feed||[]);
+      UZB.renderFeed(UZB.filterFeed(res.feed));
       UZB.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
   }
   function uOpen(){
     updateExecAllVisibility();
     var c=cGet('uzb'); if(c) uApply(c);
+    var g=UZB.gen();
     apiCall('openUzb',{},AUTH_TOKEN).then(function(res){
+      if(!UZB.genOk(g)) return;                      // устаревший ответ — мимо
       if(!res||!res.ok){ if(!c) toast((res&&res.error)||'Хато',true); return; }
       cPut('uzb',res); uApply(res);
-    }).catch(function(){ if(!c) toast('Алоқа узилди',true); });
+    }).catch(function(){ if(UZB.genOk(g) && !c) toast('Алоқа узилди',true); });
   }
 
   /* Регионы — регион выбирается */
@@ -1030,13 +1097,15 @@
     document.getElementById('gOnHand').textContent=((s.onHand||0)<0?'−$':'$ ')+fmt(Math.abs(s.onHand||0));
     document.getElementById('gPending').textContent=((s.pending||0)<0?'−$':'+$')+fmt(Math.abs(s.pending||0));
     document.getElementById('gPendCnt').textContent=(s.count||0)+' та';
-    REG.renderFeed(res.feed||[]);
+    REG.renderFeed(REG.filterFeed(res.feed));
     REG.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
   }
   function gOpen(init){
     if(!init && !gCurRegion) return;
     var c=gCurRegion?cGet('reg_'+gCurRegion):null; if(c) gApplyCached(c);
+    var g=REG.gen();
     apiCall('openRegion',{region:gCurRegion||''},AUTH_TOKEN).then(function(res){
+      if(!REG.genOk(g)) return;                      // устаревший ответ (в т.ч. от другого региона) — мимо
       if(!res||!res.ok){ if(!c) toast((res&&res.error)||'Хато',true); return; }
       if(res.region) cPut('reg_'+res.region,res);
       if(res.regions){
@@ -1058,9 +1127,9 @@
       document.getElementById('gOnHand').textContent=((s.onHand||0)<0?'−$':'$ ')+fmt(Math.abs(s.onHand||0));
       document.getElementById('gPending').textContent=((s.pending||0)<0?'−$':'+$')+fmt(Math.abs(s.pending||0));
       document.getElementById('gPendCnt').textContent=(s.count||0)+' та';
-      REG.renderFeed(res.feed||[]);
+      REG.renderFeed(REG.filterFeed(res.feed));
       REG.renderReq({ok:true, active:(res.requests&&res.requests.active)||[], done:(res.requests&&res.requests.done)||[]});
-    }).catch(function(){ if(!c) toast('Алоқа узилди',true); });
+    }).catch(function(){ if(REG.genOk(g) && !c) toast('Алоқа узилди',true); });
   }
   var gRegList=[];
   function regLetter(name){
@@ -1095,7 +1164,7 @@
     askConfirm('Бажарилдими?', function(){
       btn.disabled=true; btn.textContent='…';
       apiCall('executeRequest',{opId:id},AUTH_TOKEN).then(function(res){
-        if(res.ok){showOk('Бажарилди',''); if(pfx==='u'){UZB.refreshBalance();UZB.refreshFeed();UZB.loadReq();}else{REG.refreshBalance();REG.refreshFeed();REG.loadReq();}}
+        if(res.ok){showOk('Бажарилди',''); if(pfx==='u'){UZB.afterSave();}else{REG.afterSave();}}
         else{btn.disabled=false; btn.textContent='Бажарилди'; toast(res.error||'Хато',true);}
       }).catch(function(){btn.disabled=false; btn.textContent='Бажарилди'; toast('Алоқа узилди',true);});
     }, 'uz');
@@ -1107,8 +1176,8 @@
       apiCall('executeAllRequests',{region:region},AUTH_TOKEN).then(function(res){
         if(res.ok){
           showOk('Бажарилди', (res.count||0)+' та сделка');
-          if(region==='Узбекистан'){UZB.refreshBalance();UZB.refreshFeed();UZB.loadReq();}
-          else{REG.refreshBalance();REG.refreshFeed();REG.loadReq();}
+          if(region==='Узбекистан'){UZB.afterSave();}
+          else{REG.afterSave();}
         } else toast(res.error||'Хато',true);
       }).catch(function(){ toast('Алоқа узилди',true); });
     }, 'uz');
@@ -1407,6 +1476,32 @@
         else toast(res.error||'Ошибка',true);
       }).catch(function(){btn.disabled=false; btn.textContent='Пересчитать прибыль (месяц)'; toast('Сбой связи',true);});
     });
+  }
+  /* ===== СВЕРКА КЛИЕНТОВ (Операции <-> База) ===== */
+  function csRun(){
+    var btn=document.getElementById('csBtn'); btn.disabled=true; btn.textContent='Сверяем…';
+    var box=document.getElementById('csResult'); box.style.display='none';
+    apiCall('checkClientsSync',{},AUTH_TOKEN).then(function(res){
+      btn.disabled=false; btn.textContent='Сверить клиентов';
+      if(!res||!res.ok){ toast((res&&res.error)||'Ошибка',true); return; }
+      var miss=res.missingInDb||[], extra=res.missingInOps||[];
+      var L=[];
+      if(!miss.length&&!extra.length){
+        L.push('✅ Всё сходится: имена в Операциях и Базе совпадают.');
+      }
+      if(miss.length){
+        L.push('⚠️ ЕСТЬ В ОПЕРАЦИЯХ, НЕТ В БАЗЕ ('+miss.length+') — их нет в подсказках:');
+        miss.forEach(function(x){ L.push('   '+x.name+' · '+x.count+' оп.'); });
+      }
+      if(extra.length){
+        if(L.length) L.push('');
+        L.push('ℹ️ В Базе, но без операций ('+extra.length+') — справочно:');
+        extra.forEach(function(n){ L.push('   '+n); });
+      }
+      L.push('');
+      L.push('Лист «Сверка_клиентов» в таблице обновлён.');
+      box.textContent=L.join('\n'); box.style.display='block';
+    }).catch(function(){ btn.disabled=false; btn.textContent='Сверить клиентов'; toast('Сбой связи',true); });
   }
   /* ===== ОТЧЁТЫ ===== */
   var BAL_DATA=[], balCurFilter='all';
@@ -1795,12 +1890,12 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 2;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
+  var APP_VERSION = 3;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
   (function(){
-    // номер версии внизу экрана (для сверки глазами)
+    // номер версии внизу экрана (для сверки глазами); bottom:74px — чтобы не прятался под кнопкой ⟳
     var v=document.createElement('div');
     v.textContent='v'+APP_VERSION;
-    v.style.cssText='position:fixed;bottom:2px;right:8px;font-size:10px;color:var(--muted);opacity:.55;z-index:5;pointer-events:none;';
+    v.style.cssText='position:fixed;bottom:74px;right:14px;font-size:10px;color:var(--muted);opacity:.55;z-index:5;pointer-events:none;';
     document.body.appendChild(v);
 
     function checkVersion(){
@@ -1825,6 +1920,25 @@
     checkVersion();                          // при запуске
     setInterval(checkVersion, 10*60*1000);   // и раз в 10 минут, если приложение открыто весь день
   })();
+
+  /* ===== авто-обновление при возврате приложения из фона ===== */
+  // Телефон свернул PWA -> оператор вернулся: тихо перезапрашиваем текущий экран,
+  // чтобы не смотреть на протухший кэш. Не чаще раза в 30 секунд.
+  var _visLast=Date.now();
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState!=='visible') return;
+    var now=Date.now();
+    if(now-_visLast<30000) return;
+    _visLast=now;
+    var cur=document.querySelector('.tab.sel');
+    var name=cur?cur.getAttribute('data-s'):null;
+    if(!name) return;
+    if(name==='moscow') mOpen();
+    else if(name==='uzb') uOpen();
+    else if(name==='region') gOpen();
+    else if(name==='req' && typeof rRefresh==='function') rRefresh();
+    // Правки/Переводы/Отчёты не трогаем — там формы и ручные фильтры
+  });
 
   /* ===== старт ===== */
   if(USER_ROLE!=='admin'){
