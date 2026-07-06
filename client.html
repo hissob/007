@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<title>Ҳисобот</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1f2430; --muted:#6b7280; --line:#e6e8ec;
+    --chip:#eef1f4; --chipInk:#4b5563; --accent:#2563eb; --accentBg:#e8efff;
+    --pos:#0e7a34; --posBg:#e7f6ec; --neg:#c62828; --negBg:#fdeaea; --zero:#6b7280; --zeroBg:#eef1f4;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f1216; --card:#171b21; --ink:#e7eaef; --muted:#9aa1ad; --line:#262c35;
+      --chip:#1e242c; --chipInk:#c2c8d2; --accent:#5b8cff; --accentBg:#1b2740;
+      --pos:#4ccd7f; --posBg:#12251a; --neg:#ff6b6b; --negBg:#2a1618; --zero:#9aa1ad; --zeroBg:#1e242c;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:calc(env(safe-area-inset-top,0px) + 8px) 14px calc(env(safe-area-inset-bottom,0px) + 24px);
+  }
+  .wrap{max-width:460px;margin:0 auto}
+  .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 14px}
+  .cname{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lang{display:inline-flex;background:var(--chip);border-radius:999px;padding:3px;flex:none}
+  .lang button{border:0;background:transparent;color:var(--chipInk);font:inherit;font-size:13px;padding:5px 12px;border-radius:999px;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .chip{border:0;background:var(--chip);color:var(--chipInk);font:inherit;font-size:13px;padding:7px 14px;border-radius:999px;cursor:pointer}
+  .chip.on{background:var(--accentBg);color:var(--accent)}
+  .chip.cal{display:inline-flex;align-items:center;justify-content:center;padding:7px 11px}
+  .custom{display:none;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:12px}
+  .drow{display:flex;gap:10px}
+  .fld{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}
+  .fld input{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%}
+  .showbtn{margin-top:12px;width:100%;border:0;background:var(--accent);color:#fff;font:inherit;font-size:15px;font-weight:600;padding:11px;border-radius:10px;cursor:pointer}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 16px;text-align:center;margin-bottom:16px}
+  .open{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .capt{font-size:13px;color:var(--muted)}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;margin:10px 0}
+  .badge .ar{font-size:15px;line-height:1}
+  .b-pos{background:var(--posBg);color:var(--pos)}
+  .b-neg{background:var(--negBg);color:var(--neg)}
+  .b-zero{background:var(--zeroBg);color:var(--zero)}
+  .big{font-size:40px;font-weight:700;line-height:1.1}
+  .updated{font-size:12px;color:var(--muted);margin-top:10px}
+  .listhead{font-size:13px;color:var(--muted);margin:0 2px 6px}
+  .list{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:2px 14px}
+  .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+  .row:first-child{border-top:0}
+  .rl{min-width:0}
+  .dir{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:500}
+  .dir .ar{font-size:15px;line-height:1}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+  .amt{font-size:15px;font-weight:600;white-space:nowrap}
+  .pos{color:var(--pos)}.neg{color:var(--neg)}.zero{color:var(--zero)}
+  .empty{padding:22px 0;text-align:center;color:var(--muted);font-size:14px}
+  .state{text-align:center;padding:48px 16px;color:var(--muted)}
+  .errMsg{font-size:17px;font-weight:600;color:var(--ink);margin-top:12px}
+  .errSub{font-size:14px;color:var(--muted);margin-top:6px}
+  .spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;margin:0 auto 12px;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="cname" id="cname">&nbsp;</div>
+    <div class="lang" role="group" aria-label="Til / Язык">
+      <button id="langUz" type="button" aria-pressed="true">Ўз</button>
+      <button id="langRu" type="button" aria-pressed="false">Ру</button>
+    </div>
+  </header>
+
+  <nav class="chips" aria-label="Davr">
+    <button class="chip on" id="cMonth" type="button"></button>
+    <button class="chip" id="cLast" type="button"></button>
+    <button class="chip" id="cAll" type="button"></button>
+    <button class="chip cal" id="calBtn" type="button" aria-label="Sana">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+    </button>
+  </nav>
+
+  <div class="custom" id="custom">
+    <div class="drow">
+      <label class="fld"><span id="lblFrom"></span><input type="date" id="dFrom"></label>
+      <label class="fld"><span id="lblTo"></span><input type="date" id="dTo"></label>
+    </div>
+    <button class="showbtn" id="showBtn" type="button"></button>
+  </div>
+
+  <div id="load" class="state"><div class="spin"></div><div id="loadTxt"></div></div>
+
+  <main id="main" style="display:none">
+    <section class="card" id="tablo"></section>
+    <div class="listhead" id="listTitle"></div>
+    <section class="list" id="list"></section>
+  </main>
+
+  <div id="err" class="state" style="display:none">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+    <div class="errMsg" id="errMsg"></div>
+    <div class="errSub" id="errSub"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var EXEC='https://script.google.com/macros/s/AKfycbw9xLU2d0_38dbVl2v7afk2CKn0JaJcVbPICYFtqJzYEBUbuxVPICqf5P-71Pn2KGRGCA/exec';
+
+  var T={
+    uz:{
+      updated:'Янгиланди', current:'Жорий қолдиқ', periodEnd:'Давр охиридаги қолдиқ',
+      openAt:'Давр бошида', weOwe:'Сизга қарзимиз', youOwe:'Сиз қарздорсиз', settled:'Ҳисоб тенг',
+      ops:'Амаллар', noOps:'Ҳаракат йўқ',
+      pMonth:'Бу ой', pLast:'Ўтган ой', pAll:'Ҳаммаси', pRange:'Сана',
+      from:'Бошланиши', to:'Тугаши', show:'Кўрсатиш',
+      take:'Олдингиз', give:'Бердингиз', transfer:'Ҳавола', start:'Бошланғич',
+      rate:'курс', loading:'Юкланмоқда…',
+      notFound:'Ҳисобот топилмади', contact:'Менежерга мурожаат қилинг',
+      noConn:'Алоқа йўқ. Кейинроқ уриниб кўринг'
+    },
+    ru:{
+      updated:'Обновлено', current:'Текущий остаток', periodEnd:'Остаток на конец периода',
+      openAt:'На начало', weOwe:'Мы должны вам', youOwe:'Вы должны', settled:'Всё в расчёте',
+      ops:'Операции', noOps:'Операций нет',
+      pMonth:'Этот месяц', pLast:'Прошлый месяц', pAll:'Всё', pRange:'Даты',
+      from:'Начало', to:'Конец', show:'Показать',
+      take:'Вы взяли', give:'Вы дали', transfer:'Перевод', start:'Старт',
+      rate:'курс', loading:'Загрузка…',
+      notFound:'Отчёт не найден', contact:'Обратитесь к менеджеру',
+      noConn:'Нет связи. Попробуйте позже'
+    }
+  };
+
+  function qs(id){return document.getElementById(id);}
+  function param(n){return new URLSearchParams(location.search).get(n)||'';}
+  function iso(dt){return dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2)+'-'+('0'+dt.getDate()).slice(-2);}
+
+  var KEY=param('k').trim();
+  var lang=(param('lang')==='ru')?'ru':'uz';
+  var period='month', cFrom='', cTo='';
+  var last=null;   // последний успешный ответ — смена языка без нового запроса
+
+  function money(n){return Math.abs(Math.round(n)).toLocaleString('ru-RU')+' ₽';}
+  function signed(n){var s=n>0?'+':(n<0?'−':'');return s+money(n);}
+  function ddmm(k){if(!k)return '';var p=String(k).split('-');return p.length===3?(p[2]+'.'+p[1]):'';}
+  function rateTxt(r){
+    if(r===''||r===null||r===undefined)return '';
+    var f=parseFloat(String(r).replace(',','.'));
+    return (f>0)?String(r).replace('.',','):'';
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;';});}
+
+  function applyLang(){
+    var d=T[lang];
+    document.documentElement.lang=lang;
+    qs('langUz').setAttribute('aria-pressed', String(lang==='uz'));
+    qs('langRu').setAttribute('aria-pressed', String(lang==='ru'));
+    qs('cMonth').textContent=d.pMonth;
+    qs('cLast').textContent=d.pLast;
+    qs('cAll').textContent=d.pAll;
+    qs('lblFrom').textContent=d.from;
+    qs('lblTo').textContent=d.to;
+    qs('showBtn').textContent=d.show;
+    qs('calBtn').setAttribute('aria-label', d.pRange);
+  }
+
+  function chipsActive(){
+    ['cMonth','cLast','cAll'].forEach(function(id){qs(id).classList.remove('on');});
+    if(period==='month')qs('cMonth').classList.add('on');
+    else if(period==='lastmonth')qs('cLast').classList.add('on');
+    else if(period==='all')qs('cAll').classList.add('on');
+    qs('calBtn').classList.toggle('on', period==='custom');
+  }
+
+  function dirWord(action,d){
+    if(action==='Перевод')return d.transfer;
+    if(action==='Старт')return d.start;
+    if(action==='Бердим')return d.take;   // мы дали -> клиент олди
+    if(action==='Олдим')return d.give;    // мы взяли -> клиент берди
+    return action;
+  }
+
+  function renderData(){
+    if(!last)return;
+    var d=T[lang];
+    qs('cname').textContent=last.name||'';
+
+    var bal=Math.round(last.closing||0);
+    var pos=bal>0, neg=bal<0;
+    var badgeCls=pos?'b-pos':(neg?'b-neg':'b-zero');
+    var arrow=pos?'↙':(neg?'↗':'');
+    var word=pos?d.weOwe:(neg?d.youOwe:d.settled);
+    var capt=(last.to==='')?d.current:d.periodEnd;
+    var numCls=pos?'pos':(neg?'neg':'zero');
+
+    var openHtml='';
+    if(last.from){
+      var oc=(last.opening>0)?'pos':((last.opening<0)?'neg':'zero');
+      openHtml='<div class="open">'+d.openAt+' ('+ddmm(last.from)+'): <span class="'+oc+'">'+signed(last.opening||0)+'</span></div>';
+    }
+
+    qs('tablo').innerHTML=
+      openHtml+
+      '<div class="capt">'+capt+'</div>'+
+      '<div class="badge '+badgeCls+'">'+(arrow?'<span class="ar">'+arrow+'</span>':'')+word+'</div>'+
+      '<div class="big '+numCls+'">'+money(bal)+'</div>';
+
+    var pl=(last.period==='month')?d.pMonth:(last.period==='lastmonth')?d.pLast:(last.period==='all')?d.pAll:d.pRange;
+    qs('listTitle').textContent=d.ops+' · '+pl;
+
+    var ops=last.ops||[];
+    if(!ops.length){
+      qs('list').innerHTML='<div class="empty">'+d.noOps+'</div>';
+      return;
+    }
+    var html='';
+    for(var i=0;i<ops.length;i++){
+      var o=ops[i];
+      var h=Math.round(o.h||0);
+      var sc=(h>=0)?'pos':'neg';
+      var ar=(h>=0)?'↗':'↙';
+      var sub=[];
+      if(o.datetime)sub.push(esc(o.datetime));
+      if(o.region)sub.push(esc(o.region));
+      if(Math.abs(o.usd)>0)sub.push('$'+Math.abs(o.usd).toLocaleString('ru-RU'));
+      var rt=rateTxt(o.rate);
+      if(rt)sub.push(d.rate+' '+rt);
+      html+=
+        '<div class="row">'+
+          '<div class="rl">'+
+            '<div class="dir"><span class="ar '+sc+'">'+ar+'</span>'+esc(dirWord(o.action,d))+'</div>'+
+            '<div class="sub">'+sub.join(' · ')+'</div>'+
+          '</div>'+
+          '<div class="amt '+sc+'">'+(h>=0?'+':'−')+money(h)+'</div>'+
+        '</div>';
+    }
+    qs('list').innerHTML=html;
+  }
+
+  function show(view){
+    qs('load').style.display=(view==='load')?'block':'none';
+    qs('main').style.display=(view==='ok')?'block':'none';
+    qs('err').style.display=(view==='err')?'block':'none';
+  }
+
+  function showErr(msg){
+    var d=T[lang];
+    qs('errMsg').textContent=msg||d.notFound;
+    qs('errSub').textContent=d.contact;
+    show('err');
+  }
+
+  function load(){
+    if(!KEY){showErr();return;}
+    qs('loadTxt').textContent=T[lang].loading;
+    show('load');
+    var body={action:'getMyReport',args:{k:KEY,lang:lang,period:period,from:cFrom,to:cTo}};
+    fetch(EXEC,{method:'POST',body:JSON.stringify(body),redirect:'follow'})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data||!data.ok){showErr();return;}
+        last=data;
+        applyLang();chipsActive();renderData();
+        show('ok');
+      })
+      .catch(function(){ showErr(T[lang].noConn); });
+  }
+
+  function setPeriod(p){period=p;cFrom='';cTo='';qs('custom').style.display='none';chipsActive();load();}
+  qs('cMonth').addEventListener('click',function(){setPeriod('month');});
+  qs('cLast').addEventListener('click',function(){setPeriod('lastmonth');});
+  qs('cAll').addEventListener('click',function(){setPeriod('all');});
+  qs('calBtn').addEventListener('click',function(){
+    var c=qs('custom');
+    c.style.display=(c.style.display==='block')?'none':'block';
+  });
+  qs('showBtn').addEventListener('click',function(){
+    var f=qs('dFrom').value, t=qs('dTo').value;
+    if(!f && !t){setPeriod('all');return;}
+    period='custom';cFrom=f;cTo=t;chipsActive();load();
+  });
+
+  function setLang(l){
+    lang=l;
+    var u=new URL(location.href);
+    u.searchParams.set('lang',l);
+    history.replaceState(null,'',u);
+    applyLang();
+    if(last){chipsActive();renderData();}else if(KEY){/* во время загрузки — подписи обновятся по ответу */}else{showErr();}
+  }
+  qs('langUz').addEventListener('click',function(){setLang('uz');});
+  qs('langRu').addEventListener('click',function(){setLang('ru');});
+
+  // старт: дефолты дат для календаря + первая загрузка
+  var now=new Date();
+  qs('dFrom').value=iso(new Date(now.getFullYear(),now.getMonth(),1));
+  qs('dTo').value=iso(now);
+  applyLang();
+  chipsActive();
+  load();
+})();
+</script>
+</body>
+</html>
