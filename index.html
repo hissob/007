@@ -388,7 +388,7 @@
     <div class="head"><div><h1>Правки и сервис</h1><div class="op">Только администратор</div></div></div>
     <div class="sub-tabs">
       <div class="sub-tab sel" id="stab-cancel" onclick="aTab('cancel')">Отмена</div>
-      <div class="sub-tab" id="stab-start" onclick="aTab('start')">Остатки</div>
+      <div class="sub-tab" id="stab-clients" onclick="aTab('clients')">Мижозлар</div>
       <div class="sub-tab" id="stab-recalc" onclick="aTab('recalc')">Пересчёт</div>
     </div>
     <div id="aPane-cancel">
@@ -421,14 +421,28 @@
         <div id="aCancelList"><div class="loading">Загрузка…</div></div>
       </div>
     </div>
-    <div id="aPane-start" class="hidden">
+    <div id="aPane-clients" class="hidden">
       <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">🔗 Мижоз ҳисоби: шахсий ҳавола яратиш / янгилаш / бекор қилиш. Ҳаволани WhatsApp орқали мижозга юборинг.</div>
+        <div class="field"><label>Мижоз</label>
+          <div class="ac-wrap"><input type="text" id="mkName" placeholder="исм..." autocomplete="off" oninput="acInput('mkName','mkNameAc')" onfocus="acInput('mkName','mkNameAc')"><div class="ac-list" id="mkNameAc"></div></div>
+        </div>
+        <button class="submit" id="mkLoadBtn" onclick="mkLoad()">Кўрсатиш</button>
+        <div id="mkBox" style="display:none; margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">⚖️ Бошланғич қолдиқ: мижозга старт баланси (кимга қарзмиз / кимдан оламиз).</div>
         <div class="field"><label>Клиент</label>
           <div class="ac-wrap"><input type="text" id="sName" placeholder="клиент..." autocomplete="off" oninput="acInput('sName','sNameAc')" onfocus="acInput('sName','sNameAc')"><div class="ac-list" id="sNameAc"></div></div>
         </div>
         <div class="seg"><div class="seg-btn green sel" id="segHak" onclick="sType('hakdor')">Хакдор (+)</div><div class="seg-btn red" id="segKarz" onclick="sType('karzdor')">Карздор (−)</div></div>
         <div class="field"><label>Сумма ₽</label><input type="text" id="sSum" class="money" placeholder="0" inputmode="numeric"></div>
         <button class="submit" id="sSubmit" onclick="sSubmit()">Записать остаток</button>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">👥 Сверка клиентов: Операции ↔ База. Кого нет в Базе (не попадёт в подсказки) и кто в Базе без операций. Обновляет лист «Сверка_клиентов». Ничего не меняет.</div>
+        <button class="submit" id="csBtn" onclick="csRun()">Сверить клиентов</button>
+        <div id="csResult" style="display:none; margin-top:12px; font-size:12px; line-height:1.45; white-space:pre-wrap; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:12px; max-height:320px; overflow:auto;"></div>
       </div>
     </div>
     <div id="aPane-recalc" class="hidden">
@@ -439,11 +453,6 @@
       <div class="card">
         <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Месячный пересчёт прибыли по средневзвешенному курсу (Σруб/Σ$). Перезаписывает прибыль всех продаж и средний курс регионов. Используй для сверки с таблицей.</div>
         <button class="submit purple" id="rcMonthSubmit" onclick="rcMonthSubmit()">Пересчитать прибыль (месяц)</button>
-      </div>
-      <div class="card">
-        <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">👥 Сверка клиентов: Операции ↔ База. Покажет, кого нет в Базе (не попадает в подсказки) и кто в Базе без операций. Обновляет лист «Сверка_клиентов» в таблице. Ничего не меняет в данных.</div>
-        <button class="submit" id="csBtn" onclick="csRun()">Сверить клиентов</button>
-        <div id="csResult" style="display:none; margin-top:12px; font-size:12px; line-height:1.45; white-space:pre-wrap; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:12px; max-height:320px; overflow:auto;"></div>
       </div>
       <div class="card">
         <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px;">📦 Закрытие месяца: детали периода → архив, базы регионов и долги клиентов сворачиваются, прибыль → псевдоклиент. НЕОБРАТИМО. Сначала превью — кнопка закрытия появится только при farq ДО = ПОСЛЕ.</div>
@@ -1287,8 +1296,9 @@
 
   /* ===== ПРАВКИ ===== */
   function aTab(name){
-    ['cancel','start','recalc'].forEach(function(t){document.getElementById('stab-'+t).classList.toggle('sel',t===name); document.getElementById('aPane-'+t).classList.toggle('hidden',t!==name);});
+    ['cancel','clients','recalc'].forEach(function(t){document.getElementById('stab-'+t).classList.toggle('sel',t===name); document.getElementById('aPane-'+t).classList.toggle('hidden',t!==name);});
     if(name==='cancel') aLoadCancel();
+    if(name==='clients') mkReset();
   }
   var aRegionLoaded=false;
   function aInitRegionFilter(){
@@ -1351,11 +1361,7 @@
   function aCancel(btn){
     var id=btn.getAttribute('data-id');
     askConfirm('Отменить эту операцию?', function(){
-      btn.disabled=true; btn.textContent='…';
-      apiCall('cancelOperation',{opId:id},AUTH_TOKEN).then(function(res){
-        if(res.ok){showOk('Отменено',''); aLoadCancel();}
-        else{btn.disabled=false; btn.textContent='Отменить'; toast(res.error||'Ошибка',true);}
-      }).catch(function(){btn.disabled=false; btn.textContent='Отменить'; toast('Сбой связи',true);});
+      doCancel(id, false, btn);
     });
   }
   function aChangeDate(id){
@@ -1400,15 +1406,7 @@
   }
   function aEdit(it){
     askConfirm('Исправить операцию? Старая отменится, откроется форма с её данными.', function(){
-      apiCall('cancelOperation',{opId:it.id},AUTH_TOKEN).then(function(res){
-        if(!res.ok){ toast(res.error||'Ошибка отмены',true); return; }
-        showOk('Можно исправлять','Старая операция отменена');
-        var region=String(it.region||'').trim();
-        var act=(it.action==='Олдим')?'oldim':'berdim';
-        if(region==='Москва') startEditMoscow(act,it);
-        else if(region==='Узбекистан') startEditRegionLike('u',act,it,region);
-        else startEditRegionLike('g',act,it,region);
-      }).catch(function(){toast('Сбой связи',true);});
+      doEditCancel(it, false);
     });
   }
   function startEditRegionLike(pfx,act,it,region){
@@ -1889,8 +1887,124 @@
     });
   }
 
+  /* ===== МИЖОЗЛАР: ссылка-ключ клиента (выдать/перевыпустить/отозвать) ===== */
+  var mkCur=null;   // {name, closing, phone, url, hasKey}
+  function mkReset(){
+    var b=document.getElementById('mkBox'); if(b){b.style.display='none'; b.innerHTML='';}
+    var i=document.getElementById('mkName'); if(i) i.value='';
+    mkCur=null;
+  }
+  function mkLoad(){
+    var name=document.getElementById('mkName').value.trim();
+    if(!name){toast('Мижозни танланг',true); return;}
+    var btn=document.getElementById('mkLoadBtn'); btn.disabled=true; btn.textContent='…';
+    var box=document.getElementById('mkBox');
+    var info=null;
+    apiCall('getClientPortalInfo',{name:name},AUTH_TOKEN).then(function(r1){
+      info=r1;
+      return apiCall('getClientReport',{name:name,dateFrom:'',dateTo:'',lang:'uz'},AUTH_TOKEN);
+    }).then(function(rep){
+      btn.disabled=false; btn.textContent='Кўрсатиш';
+      if(!info||!info.ok){ box.style.display='block'; box.innerHTML='<div style="color:var(--minus);font-size:13px;">'+esc((info&&info.error)||'Хато')+'</div>'; return; }
+      var phone=''; for(var i=0;i<DB.length;i++){ if(DB[i].name===name){ phone=String(DB[i].phone||'').replace(/\D/g,''); break; } }
+      var closing=(rep&&rep.ok)?Math.round(rep.closing||0):0;
+      mkCur={name:name, closing:closing, phone:phone, url:info.url||'', hasKey:!!info.hasKey};
+      mkRender(info, phone);
+    }).catch(function(){ btn.disabled=false; btn.textContent='Кўрсатиш'; toast('Алоқа узилди',true); });
+  }
+  function mkRender(info, phone){
+    var box=document.getElementById('mkBox'); box.style.display='block';
+    var h='';
+    if(info.hasKey){
+      h+='<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Ҳавола фаол'+(info.issued?(' · '+esc(info.issued)):'')+'</div>';
+      h+='<div style="font-size:12px;word-break:break-all;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:10px;">'+esc(info.url)+'</div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+      h+='<button class="btn-share" style="flex:1;min-width:110px;padding:11px;" onclick="mkCopy()">Нусха</button>';
+      if(phone) h+='<a class="btn-done" style="flex:1;min-width:110px;padding:11px;text-decoration:none;display:flex;align-items:center;justify-content:center;" href="'+mkWaLink()+'" target="_blank">WhatsApp</a>';
+      h+='</div>';
+      h+='<div style="display:flex;gap:8px;margin-top:8px;">';
+      h+='<button class="btn-share" style="flex:1;padding:11px;" onclick="mkIssue()">Янги ҳавола</button>';
+      h+='<button class="btn-cancel" style="flex:1;padding:11px;" onclick="mkRevoke()">Бекор қилиш</button>';
+      h+='</div>';
+      if(!phone) h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;">Базада телефон йўқ — WhatsApp учун «Нусха» қилиб қўлда юборинг.</div>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Ҳавола ҳали яратилмаган.</div>';
+      h+='<button class="submit" onclick="mkIssue()">Ҳавола яратиш</button>';
+    }
+    box.innerHTML=h;
+  }
+  function mkWaText(){
+    var b=mkCur?mkCur.closing:0, abs=Math.abs(b).toLocaleString('ru-RU');
+    var s = b>0 ? ('сизга '+abs+' ₽') : (b<0 ? ('қарзингиз '+abs+' ₽') : 'ҳисоб тенг');
+    return 'Ҳисобингиз янгиланди: '+s+' · '+(mkCur?mkCur.url:'');
+  }
+  function mkWaLink(){ return 'https://wa.me/'+(mkCur?mkCur.phone:'')+'?text='+encodeURIComponent(mkWaText()); }
+  function mkCopy(){
+    var url=mkCur?mkCur.url:''; if(!url) return;
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){toast('Нусха олинди');},function(){mkCopyFallback(url);}); }
+    else mkCopyFallback(url);
+  }
+  function mkCopyFallback(url){
+    var ta=document.createElement('textarea'); ta.value=url; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); toast('Нусха олинди'); }catch(e){ toast('Нусха олинмади',true); }
+    document.body.removeChild(ta);
+  }
+  function mkIssue(){
+    var name=mkCur?mkCur.name:document.getElementById('mkName').value.trim(); if(!name) return;
+    var msg=(mkCur&&mkCur.hasKey)?'Янги ҳавола яратилсинми? Эски ҳавола ишламай қолади.':'Мижозга ҳавола яратилсинми?';
+    askConfirm(msg, function(){
+      apiCall('issueClientKey',{name:name},AUTH_TOKEN).then(function(res){
+        if(res.ok){ toast('Ҳавола тайёр'); mkLoad(); }
+        else toast(res.error||'Хато',true);
+      }).catch(function(){toast('Алоқа узилди',true);});
+    }, 'uz');
+  }
+  function mkRevoke(){
+    var name=mkCur?mkCur.name:document.getElementById('mkName').value.trim(); if(!name) return;
+    askConfirm('Ҳавола бекор қилинсинми? Мижоз ссылкаси ишламай қолади.', function(){
+      apiCall('revokeClientKey',{name:name},AUTH_TOKEN).then(function(res){
+        if(res.ok){ toast('Бекор қилинди'); mkLoad(); }
+        else toast(res.error||'Хато',true);
+      }).catch(function(){toast('Алоқа узилди',true);});
+    }, 'uz');
+  }
+
+  /* ===== ОТМЕНА с подтверждением исполненной заявки (needConfirm) ===== */
+  function doCancel(id, force, btn){
+    if(btn){ btn.disabled=true; btn.textContent='…'; }
+    apiCall('cancelOperation',{opId:id,force:force},AUTH_TOKEN).then(function(res){
+      if(res.ok){ showOk('Отменено',''); aLoadCancel(); return; }
+      if(res.needConfirm){
+        if(btn){ btn.disabled=false; btn.textContent='Отменить'; }
+        askConfirm('⚠️ Заявка УЖЕ ИСПОЛНЕНА ('+(res.executor||'?')+', '+(res.time||'')+'). Деньги могли быть выданы. Точно отменить?', function(){
+          doCancel(id, true, btn);
+        });
+        return;
+      }
+      if(btn){ btn.disabled=false; btn.textContent='Отменить'; }
+      toast(res.error||'Ошибка',true);
+    }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='Отменить'; } toast('Сбой связи',true); });
+  }
+  function doEditCancel(it, force){
+    apiCall('cancelOperation',{opId:it.id,force:force},AUTH_TOKEN).then(function(res){
+      if(res.needConfirm){
+        askConfirm('⚠️ Заявка УЖЕ ИСПОЛНЕНА ('+(res.executor||'?')+', '+(res.time||'')+'). Деньги могли быть выданы. Точно отменить и исправить?', function(){
+          doEditCancel(it, true);
+        });
+        return;
+      }
+      if(!res.ok){ toast(res.error||'Ошибка отмены',true); return; }
+      showOk('Можно исправлять','Старая операция отменена');
+      var region=String(it.region||'').trim();
+      var act=(it.action==='Олдим')?'oldim':'berdim';
+      if(region==='Москва') startEditMoscow(act,it);
+      else if(region==='Узбекистан') startEditRegionLike('u',act,it,region);
+      else startEditRegionLike('g',act,it,region);
+    }).catch(function(){toast('Сбой связи',true);});
+  }
+
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 3;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
+  var APP_VERSION = 4;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
   (function(){
     // номер версии внизу экрана (для сверки глазами); bottom:74px — чтобы не прятался под кнопкой ⟳
     var v=document.createElement('div');
@@ -1907,8 +2021,8 @@
       if(document.getElementById('updBar')) return;
       var b=document.createElement('div');
       b.id='updBar';
-      b.innerHTML='Янги версия бор (v'+newV+') <span style="text-decoration:underline;font-weight:700;">Янгилаш</span>';
-      b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#1f6feb;color:#fff;text-align:center;padding:10px;font-size:14px;cursor:pointer;';
+      b.innerHTML='<span>Янги версия (v'+newV+')</span><span style="background:rgba(255,255,255,.22);padding:5px 12px;border-radius:999px;font-weight:700;">Янгилаш</span>';
+      b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);z-index:999;background:#1e9e57;color:#fff;padding:12px 18px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;max-width:calc(100% - 28px);';
       b.onclick=function(){
         // сносим кэш оболочки и перезагружаемся на свежую
         var done=function(){ location.reload(); };
