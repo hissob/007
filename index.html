@@ -320,7 +320,7 @@
       <div><h1>Ҳудудлар</h1><div class="op">Оператор: <span id="opNameG">…</span></div></div>
       <div class="balance"><div class="lbl">Қолдиқ</div><div class="rub" id="gBalUsd">…</div><div class="usd" id="gBalAvg"></div><div class="profit" id="gBalProfit"></div></div>
     </div>
-    <div class="counter">
+    <div class="counter" style="display:none;">
       <div class="cbox"><div class="lbl">Қўлда</div><div class="val" id="gOnHand">…</div><div class="sub">$ қолдиқ</div></div>
       <div class="cbox pending"><div class="lbl">Сделкаларда</div><div class="val" id="gPending">…</div><div class="sub" id="gPendCnt"></div></div>
     </div>
@@ -347,10 +347,10 @@
       <div class="field" id="gOpDateField"><label>Сана (бўш = бугун)</label><input type="date" id="gOpDate"></div>
       <button class="submit" id="gSubmit" onclick="gSubmit()">Сделка яратиш</button>
     </div>
-    <div class="card feed"><h2>История · 2 кун</h2>
+    <div class="card feed"><h2>История · сўнгги 20</h2>
       <div id="gFeed"><div class="loading">Юкланмоқда…</div></div>
     </div>
-    <div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><div class="sec-title" style="margin:0;">Бу ҳудуд сделкалари</div><div id="gExecAllBtn" onclick="execAllRequests(gCurRegion)" style="display:none; padding:7px 12px; background:rgba(61,220,132,.15); border:1px solid var(--accent); border-radius:9px; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer;">Барчасини бажарилди</div></div><div id="gReqList"><div class="loading">Юкланмоқда…</div></div></div>
+    <div class="card" style="display:none;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><div class="sec-title" style="margin:0;">Бу ҳудуд сделкалари</div><div id="gExecAllBtn" onclick="execAllRequests(gCurRegion)" style="display:none; padding:7px 12px; background:rgba(61,220,132,.15); border:1px solid var(--accent); border-radius:9px; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer;">Барчасини бажарилди</div></div><div id="gReqList"><div class="loading">Юкланмоқда…</div></div></div>
   </div>
 
   <!-- ====== СДЕЛКИ (оператор 3) ====== -->
@@ -429,6 +429,11 @@
         </div>
         <button class="submit" id="mkLoadBtn" onclick="mkLoad()">Кўрсатиш</button>
         <div id="mkBox" style="display:none; margin-top:12px;"></div>
+        <div style="border-top:1px solid var(--line); margin-top:14px; padding-top:12px;">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Барча мижозларга ҳавола (кими йўқ — яратилади, борларга тегмайди):</div>
+          <button class="btn-share" style="width:100%;" id="mkAllBtn" onclick="mkAll()">Ҳаммага ҳавола</button>
+          <div id="mkAllRes" style="display:none;margin-top:8px;font-size:12px;color:var(--muted);"></div>
+        </div>
       </div>
       <div class="card">
         <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">⚖️ Бошланғич қолдиқ: мижозга старт баланси (кимга қарзмиз / кимдан оламиз).</div>
@@ -553,6 +558,7 @@
     <div id="clOpsList"><div class="loading">Юкланмоқда…</div></div>
     <button class="submit" id="clReportBtn" onclick="clBuildReport()" style="margin-top:14px;">Ҳисобот тайёрлаш (WhatsApp)</button>
     <div id="clReportResult"></div>
+    <div id="clKeyBox" style="margin-top:14px;"></div>
   </div>
 
 </div>
@@ -883,9 +889,16 @@
     function hint(){
       var usd=moneyVal(pfx+'Usd'+(pfx==='g'?'In':'')),rate=parseFloat(String(id('Rate').value).replace(',','.'))||0,rub=moneyVal(pfx+'Rub');
       var h=id('Hint');
-      if(usd>0&&rate>0){var sug=usd*rate;
-        if(st.rubEdited&&Math.abs(rub-sug)>=1){h.innerHTML='<span class="ed">Тузатилди.</span> Курс бўйича '+fmt(sug)+' ₽ эди. Ҳисобга '+fmt(rub)+' ₽.';}
-        else h.textContent='Таклиф: '+usd+' × '+String(rate).replace('.',',')+' = '+fmt(sug)+' ₽.';
+      if(usd>0&&rub>0){
+        var eff=rub/usd;
+        var effTxt='≈ курс '+(Math.round(eff*1e6)/1e6).toString().replace('.',',');
+        if(!st.rubEdited&&rate>0){
+          h.textContent='Таклиф: '+usd+' × '+String(rate).replace('.',',')+' = '+fmt(usd*rate)+' ₽  ·  '+effTxt;
+        } else {
+          h.innerHTML='<span class="ed">'+effTxt+'</span>  ·  ҳисобга '+fmt(rub)+' ₽';
+        }
+      } else if(usd>0&&rate>0){
+        h.textContent='Таклиф: '+usd+' × '+String(rate).replace('.',',')+' = '+fmt(usd*rate)+' ₽.';
       } else h.textContent='Доллар ва курсни киритинг.';
     }
     function render(){
@@ -1010,7 +1023,9 @@
         var cls=it.usd<0?'minus':'plus';
         var rubTxt=it.rub?(' · '+fmt(Math.abs(it.rub))+' ₽'):'';
         var rateTxt=it.rate?(' · курс '+String(it.rate).replace('.',',')):'';
-        var amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+'<span class="sub">'+(it.status==='заявка'?'сделка':'бажарилган')+rateTxt+rubTxt+'</span>';
+        var stTxt=(pfx==='g')?'':((it.status==='заявка'?'сделка':'бажарилган'));
+        var sub=(stTxt+rateTxt+rubTxt).replace(/^ · /,'');
+        var amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+'<span class="sub">'+sub+'</span>';
         h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+amt+'</div></div>';
       });
       box.innerHTML=h;
@@ -1503,6 +1518,7 @@
   }
   /* ===== ОТЧЁТЫ ===== */
   var BAL_DATA=[], balCurFilter='all';
+  var OV_DATA=null, CL_CACHE={}, clClosing=0, clKeyInfo=null;   // V5: кэш для мгновенных списков
   function repInit(){ repTab('balance'); }
   function repTab(name){
     ['balance','daily','overview'].forEach(function(t){
@@ -1515,11 +1531,12 @@
     if(name==='overview') ovLoad();
   }
   function ovLoad(){
-    document.getElementById('ovBox').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    if(OV_DATA) ovRender(OV_DATA);   // мгновенно из памяти
+    else document.getElementById('ovBox').innerHTML='<div class="loading">Юкланмоқда…</div>';
     apiCall('getOverview',{},AUTH_TOKEN).then(function(res){
-      if(!res||!res.ok){ document.getElementById('ovBox').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
-      ovRender(res);
-    }).catch(function(){ document.getElementById('ovBox').innerHTML='<div class="empty">Алоқа узилди</div>'; });
+      if(!res||!res.ok){ if(!OV_DATA) document.getElementById('ovBox').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      OV_DATA=res; ovRender(res);
+    }).catch(function(){ if(!OV_DATA) document.getElementById('ovBox').innerHTML='<div class="empty">Алоқа узилди</div>'; });
   }
   function ovRender(d){
     function rate2(v){ return (Math.round((parseFloat(v)||0)*100)/100).toFixed(2).replace('.',','); }
@@ -1547,14 +1564,16 @@
     document.getElementById('ovBox').innerHTML=h;
   }
   function balLoad(){
-    document.getElementById('balList').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    var first=!(BAL_DATA&&BAL_DATA.length);
+    if(first) document.getElementById('balList').innerHTML='<div class="loading">Юкланмоқда…</div>';
+    else balRender();   // мгновенно из памяти, без спиннера
     apiCall('getClientsBalance',{},AUTH_TOKEN).then(function(res){
-      if(!res||!res.ok){ document.getElementById('balList').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      if(!res||!res.ok){ if(first) document.getElementById('balList').innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
       BAL_DATA=res.items||[];
       document.getElementById('balTotalPlus').textContent=fmt(res.totalPlus)+' ₽';
       document.getElementById('balTotalMinus').textContent=fmt(res.totalMinus)+' ₽';
       balRender();
-    }).catch(function(){ document.getElementById('balList').innerHTML='<div class="empty">Алоқа узилди</div>'; });
+    }).catch(function(){ if(first) document.getElementById('balList').innerHTML='<div class="empty">Алоқа узилди</div>'; });
   }
   function balFilter(f){
     balCurFilter=f;
@@ -1786,6 +1805,7 @@
     document.getElementById('clName').textContent=name;
     document.getElementById('clPhone').textContent='';
     document.getElementById('clReportResult').innerHTML='';
+    document.getElementById('clKeyBox').innerHTML='';
     document.getElementById('clRangeBox').classList.add('hidden');
     document.getElementById('clPerAll').classList.add('sel');
     document.getElementById('clPerToday').classList.remove('sel');
@@ -1793,6 +1813,7 @@
     ['moscow','uzb','region','req','transfer','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
     document.getElementById('scr-client').classList.remove('hidden');
     clLoadOps();
+    clKeyLoad();
   }
   function clientBack(){
     document.getElementById('scr-client').classList.add('hidden');
@@ -1816,15 +1837,21 @@
   }
   function clLoadOps(){
     var box=document.getElementById('clOpsList');
-    box.innerHTML='<div class="loading">Юкланмоқда…</div>';
     document.getElementById('clReportResult').innerHTML='';
     var d=clDates();
+    var key=clCurName+'|'+clPeriodVal+'|'+d.from+'|'+d.to;
+    var cached=CL_CACHE[key];
+    if(cached){
+      clReportText=cached.text||''; clReportPhone=cached.phone||''; clClosing=cached.closing||0;
+      clRenderBalance(cached.closing||0,(cached.ops||[]).length); clRenderOps(cached.ops||[]);
+    } else box.innerHTML='<div class="loading">Юкланмоқда…</div>';
     apiCall('getClientReport',{name:clCurName,dateFrom:d.from,dateTo:d.to,lang:'uz'},AUTH_TOKEN).then(function(res){
-      if(!res||!res.ok){ box.innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
-      clReportText=res.text||''; clReportPhone=res.phone||'';
+      if(!res||!res.ok){ if(!cached) box.innerHTML='<div class="empty">'+((res&&res.error)||'Хато')+'</div>'; return; }
+      CL_CACHE[key]=res;
+      clReportText=res.text||''; clReportPhone=res.phone||''; clClosing=res.closing||0;
       clRenderBalance(res.closing||0, res.ops?res.ops.length:0);
       clRenderOps(res.ops||[]);
-    }).catch(function(){ box.innerHTML='<div class="empty">Алоқа узилди</div>'; });
+    }).catch(function(){ if(!cached) box.innerHTML='<div class="empty">Алоқа узилди</div>'; });
   }
   function clRenderBalance(closing, count){
     var el=document.getElementById('clBalance');
@@ -1846,7 +1873,7 @@
         cls=it.h>=0?'plus':'minus';
         title='Бошланғич'; amtMain=(it.h>=0?'+':'−')+fmt(it.rub)+' ₽';
       } else {
-        cls=it.usd<0?'minus':'plus';
+        cls=it.h>=0?'plus':'minus';
         title=esc(it.action)+(it.region?' · '+esc(it.region):'');
         var rateTxt=it.rate?(' · курс '+String(it.rate).replace('.',',')):'';
         amtMain=(Math.abs(it.usd)>0?((it.usd<0?'−$':'+$')+fmt(Math.abs(it.usd))):((it.h<0?'−':'+')+fmt(it.rub)+' ₽'));
@@ -1877,6 +1904,59 @@
     try{document.execCommand('copy'); toast('Нусха олинди');}catch(e){toast('Нусха олинмади',true);}
     document.body.removeChild(ta);
   }
+  /* --- ссылка клиента прямо с экрана клиента (op2 может выдать, бекор — только admin) --- */
+  function clKeyPhone(){ var p=''; for(var i=0;i<DB.length;i++){ if(DB[i].name===clCurName){ p=String(DB[i].phone||'').replace(/\D/g,''); break; } } return p; }
+  function clKeyWaText(){
+    var b=Math.round(clClosing||0), abs=Math.abs(b).toLocaleString('ru-RU');
+    var s=b>0?('сизга '+abs+' ₽'):(b<0?('қарзингиз '+abs+' ₽'):'ҳисоб тенг');
+    return 'Ҳисобингиз янгиланди: '+s+' · '+((clKeyInfo&&clKeyInfo.url)||'');
+  }
+  function clKeyLoad(){
+    var box=document.getElementById('clKeyBox'); box.innerHTML='';
+    apiCall('getClientPortalInfo',{name:clCurName},AUTH_TOKEN).then(function(r){
+      if(!r||!r.ok){ box.innerHTML=''; return; }   // нет прав/ошибка — молча
+      clKeyInfo=r; clKeyRender(r);
+    }).catch(function(){});
+  }
+  function clKeyRender(r){
+    var box=document.getElementById('clKeyBox');
+    var isAdmin=(USER_ROLE==='admin'), phone=clKeyPhone();
+    var h='<div class="card" style="margin-top:0;"><div class="sec-title" style="margin:0 0 10px;">Мижозга ҳавола</div>';
+    if(r.hasKey){
+      h+='<div style="font-size:12px;word-break:break-all;background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:10px;">'+esc(r.url)+'</div>';
+      h+='<div class="req-btns"><button class="btn-share" style="flex:1;" onclick="clKeyCopy()">Нусха</button>';
+      if(phone) h+='<a class="btn-done" style="flex:1;text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/'+phone+'?text='+encodeURIComponent(clKeyWaText())+'" target="_blank">WhatsApp</a>';
+      h+='</div><div class="req-btns" style="margin-top:8px;"><button class="btn-share" style="flex:1;" onclick="clKeyIssue()">Янги ҳавола</button>';
+      if(isAdmin) h+='<button class="btn-cancel" style="flex:1;" onclick="clKeyRevoke()">Бекор қилиш</button>';
+      h+='</div>';
+      if(!phone) h+='<div style="font-size:11px;color:var(--muted);margin-top:8px;">Базада телефон йўқ — «Нусха» қилиб қўлда юборинг.</div>';
+    } else {
+      h+='<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Ҳавола ҳали яратилмаган.</div>';
+      h+='<button class="submit" onclick="clKeyIssue()">Ҳавола яратиш</button>';
+    }
+    h+='</div>'; box.innerHTML=h;
+  }
+  function clKeyCopy(){
+    var url=(clKeyInfo&&clKeyInfo.url)||''; if(!url) return;
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){toast('Нусха олинди');},function(){clKeyCopyFb(url);}); }
+    else clKeyCopyFb(url);
+  }
+  function clKeyCopyFb(url){ var ta=document.createElement('textarea'); ta.value=url; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); toast('Нусха олинди');}catch(e){toast('Нусха олинмади',true);} document.body.removeChild(ta); }
+  function clKeyIssue(){
+    var msg=(clKeyInfo&&clKeyInfo.hasKey)?'Янги ҳавола яратилсинми? Эски ишламай қолади.':'Мижозга ҳавола яратилсинми?';
+    askConfirm(msg, function(){
+      apiCall('issueClientKey',{name:clCurName},AUTH_TOKEN).then(function(res){
+        if(res.ok){ toast('Ҳавола тайёр'); clKeyLoad(); } else toast(res.error||'Хато',true);
+      }).catch(function(){toast('Алоқа узилди',true);});
+    }, 'uz');
+  }
+  function clKeyRevoke(){
+    askConfirm('Ҳавола бекор қилинсинми? Мижоз ссылкаси ишламай қолади.', function(){
+      apiCall('revokeClientKey',{name:clCurName},AUTH_TOKEN).then(function(res){
+        if(res.ok){ toast('Бекор қилинди'); clKeyLoad(); } else toast(res.error||'Хато',true);
+      }).catch(function(){toast('Алоқа узилди',true);});
+    }, 'uz');
+  }
   document.getElementById('clFrom').addEventListener('change',function(){ if(clPeriodVal==='range') clLoadOps(); });
   document.getElementById('clTo').addEventListener('change',function(){ if(clPeriodVal==='range') clLoadOps(); });
 
@@ -1889,6 +1969,17 @@
 
   /* ===== МИЖОЗЛАР: ссылка-ключ клиента (выдать/перевыпустить/отозвать) ===== */
   var mkCur=null;   // {name, closing, phone, url, hasKey}
+  function mkAll(){
+    askConfirm('Ҳамма мижозларга ҳавола яратилсинми? (ключи борларга тегмайди)', function(){
+      var b=document.getElementById('mkAllBtn'); b.disabled=true; b.textContent='…';
+      apiCall('issueKeysForAll',{},AUTH_TOKEN).then(function(res){
+        b.disabled=false; b.textContent='Ҳаммага ҳавола';
+        var r=document.getElementById('mkAllRes'); r.style.display='block';
+        if(res.ok){ r.textContent='Тайёр: янги '+(res.created||0)+', аввалдан '+(res.existed||0); toast('Тайёр'); }
+        else r.textContent=res.error||'Хато';
+      }).catch(function(){ b.disabled=false; b.textContent='Ҳаммага ҳавола'; toast('Алоқа узилди',true); });
+    }, 'uz');
+  }
   function mkReset(){
     var b=document.getElementById('mkBox'); if(b){b.style.display='none'; b.innerHTML='';}
     var i=document.getElementById('mkName'); if(i) i.value='';
@@ -2004,7 +2095,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 4;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
+  var APP_VERSION = 5;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
   (function(){
     // номер версии внизу экрана (для сверки глазами); bottom:74px — чтобы не прятался под кнопкой ⟳
     var v=document.createElement('div');
