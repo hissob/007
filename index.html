@@ -205,10 +205,13 @@
   .sub-tabs{display:flex; gap:8px; margin-bottom:14px;}
   .sub-tab{flex:1; padding:10px; text-align:center; border:1px solid var(--line); background:var(--card); border-radius:10px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer;}
   .sub-tab.sel{background:var(--card2); border-color:var(--minus); color:var(--txt);}
-  .cancel-item{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .cancel-item{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:8px;}
   .cancel-item .info{font-size:13px;}
-  .cancel-item .info .t{font-weight:600;}
-  .cancel-item .info .m{font-size:11px; color:var(--muted); margin-top:2px;}
+  .cancel-item .info .t{font-weight:600; line-height:1.35;}
+  .cancel-item .info .m{font-size:11px; color:var(--muted); margin-top:3px;}
+  .cancel-item .acts{display:flex; gap:8px; margin-top:10px;}
+  .cbtn{width:42px; height:38px; display:flex; align-items:center; justify-content:center; background:var(--card2); border:1px solid var(--line); border-radius:10px; color:var(--accent); font-size:16px; cursor:pointer; padding:0;}
+  .cbtn.red{margin-left:auto; background:rgba(255,107,107,.12); border-color:var(--minus); color:var(--minus); font-size:17px; font-weight:700;}
   .btn-cancel{flex:0 0 auto; padding:9px 12px; background:rgba(255,107,107,.12); color:var(--minus); border:1px solid var(--minus); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;}
   .date-row{display:flex; gap:8px; align-items:center; margin-bottom:12px;}
   .date-row input{flex:1;}
@@ -250,15 +253,15 @@
       <div class="field" id="mUsdToggleField">
         <div class="usd-row"><span data-i18n="usdQ">Доллар $ бор?</span><label class="switch"><input type="checkbox" id="mUsdSwitch" onchange="mToggleUsd()"><span class="slider"></span></label></div>
       </div>
-      <div class="field hidden" id="mUsdField"><div class="row2"><div><label data-i18n="lblUsd">Доллар $</label><input type="text" id="mUsd" class="money" placeholder="0" inputmode="numeric"></div><div><label data-i18n="lblRate">Курс</label><input type="text" id="mUsdRate" placeholder="0" inputmode="decimal"></div></div><div class="fact-hint" id="mUsdHint" data-i18n="musdHint"></div></div>
+      <div class="field hidden" id="mUsdField"><div class="row2"><div><label data-i18n="lblUsd">Доллар $</label><input type="text" id="mUsd" class="money" placeholder="0" inputmode="numeric" oninput="mUsdCalc()"></div><div><label data-i18n="lblRate">Курс</label><input type="text" id="mUsdRate" placeholder="0" inputmode="decimal" oninput="mUsdCalc()"></div></div><div style="margin-top:10px;"><label data-i18n="lblRubFact">Рубль (факт)</label><input type="text" id="mUsdRub" class="money" placeholder="0" inputmode="numeric" oninput="mUsdRubEdit()"></div><div class="fact-hint" id="mUsdHint" data-i18n="musdHint"></div></div>
       <div class="field hidden" id="mExchField">
         <div class="exch">
           <div class="dir-row"><div class="dir-btn sel" id="mDirUR" onclick="mDir('UR')">$ → ₽</div><div class="dir-btn" id="mDirRU" onclick="mDir('RU')">₽ → $</div></div>
           <div class="row">
-            <div><label id="mExLbl1" data-i18n="gaveUsd">Бердим $</label><input type="text" id="mExA" class="money" placeholder="0" inputmode="numeric" oninput="mCalcRate()"></div>
-            <div><label id="mExLbl2" data-i18n="gotRub">Олдим ₽</label><input type="text" id="mExB" class="money" placeholder="0" inputmode="numeric" oninput="mCalcRate()"></div>
+            <div><label id="mExLbl1" data-i18n="gaveUsd">Бердим $</label><input type="text" id="mExA" class="money" placeholder="0" inputmode="numeric" oninput="mExInput('A')"></div>
+            <div><label id="mExLbl2" data-i18n="gotRub">Олдим ₽</label><input type="text" id="mExB" class="money" placeholder="0" inputmode="numeric" oninput="mExInput('B')"></div>
           </div>
-          <div class="rate-box"><label data-i18n="lblRate">Курс</label><input type="text" id="mRate" placeholder="—" readonly><div class="calc" id="mRateCalc" data-i18n="rateAuto">Суммани киритинг — курс ўзи ҳисобланади</div></div>
+          <div class="rate-box"><label data-i18n="lblRate">Курс</label><input type="text" id="mRate" placeholder="—" inputmode="decimal" oninput="mExInput('R')"><div class="calc" id="mRateCalc" data-i18n="rateAuto">Суммани киритинг — курс ўзи ҳисобланади</div></div>
         </div>
       </div>
       <div class="field"><label data-i18n="lblNote">Изоҳ</label><input type="text" id="mNote" data-i18n-ph="phOptional" placeholder="ихтиёрий"></div>
@@ -399,7 +402,7 @@
           <div><label data-i18n="lblTo">По дату</label><input type="date" id="aDateTo"></div>
         </div>
         <div class="field" style="margin-bottom:10px;"><label data-i18n="lblClient">Клиент</label>
-          <div class="ac-wrap" style="position:relative;"><input type="text" id="aName" placeholder="исм бўйича қидириш..." autocomplete="off" oninput="acInput('aName','aNameAc'); aNameClearToggle();" onfocus="acInput('aName','aNameAc')" style="padding-right:40px;"><div id="aNameClear" onclick="aNameClear()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); width:26px; height:26px; border-radius:50%; background:var(--card); border:1px solid var(--line); color:var(--muted); align-items:center; justify-content:center; cursor:pointer; font-size:15px; z-index:5;">✕</div><div class="ac-list" id="aNameAc"></div></div>
+          <div class="ac-wrap" style="position:relative;"><input type="text" id="aName" data-i18n-ph="phSearchName" placeholder="исм бўйича қидириш..." autocomplete="off" oninput="acInput('aName','aNameAc'); aNameClearToggle();" onfocus="acInput('aName','aNameAc')" style="padding-right:40px;"><div id="aNameClear" onclick="aNameClear()" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); width:26px; height:26px; border-radius:50%; background:var(--card); border:1px solid var(--line); color:var(--muted); align-items:center; justify-content:center; cursor:pointer; font-size:15px; z-index:5;">✕</div><div class="ac-list" id="aNameAc"></div></div>
         </div>
         <div class="row2" style="margin-bottom:10px;">
           <div><label data-i18n="action">Действие</label>
@@ -473,9 +476,9 @@
   <div class="screen hidden" id="scr-reports">
     <div class="head"><div><h1 data-i18n="hReports">Ҳисоботлар</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameRep">…</span></div></div></div>
     <div class="sub-tabs" id="repSubTabs">
-      <div class="sub-tab sel" id="rtab-balance" onclick="repTab('balance')">Мижозлар баланси</div>
-      <div class="sub-tab" id="rtab-daily" onclick="repTab('daily')">Кунлик</div>
-      <div class="sub-tab" id="rtab-overview" onclick="repTab('overview')">Умумий ҳолат</div>
+      <div class="sub-tab sel" id="rtab-balance" onclick="repTab('balance')" data-i18n="rptBalance">Мижозлар баланси</div>
+      <div class="sub-tab" id="rtab-daily" onclick="repTab('daily')" data-i18n="rptDaily">Кунлик</div>
+      <div class="sub-tab" id="rtab-overview" onclick="repTab('overview')" data-i18n="rptOverview">Умумий ҳолат</div>
     </div>
     <div id="repPane-balance">
       <div class="counter">
@@ -496,22 +499,22 @@
     <div id="repPane-client" class="hidden">
       <div class="card">
         <div class="field"><label data-i18n="lblClient">Мижоз</label>
-          <div class="ac-wrap"><input type="text" id="crName" placeholder="исм..." autocomplete="off" oninput="acInput('crName','crAc')" onfocus="acInput('crName','crAc')"><div class="ac-list" id="crAc"></div></div>
+          <div class="ac-wrap"><input type="text" id="crName" data-i18n-ph="phName" placeholder="исм..." autocomplete="off" oninput="acInput('crName','crAc')" onfocus="acInput('crName','crAc')"><div class="ac-list" id="crAc"></div></div>
         </div>
         <div class="seg" style="margin-bottom:10px;">
           <div class="seg-btn sel" id="crLangUz" onclick="crLang('uz')">Ўзбекча</div>
           <div class="seg-btn" id="crLangRu" onclick="crLang('ru')">Русский</div>
         </div>
         <div class="seg" style="margin-bottom:12px;">
-          <div class="seg-btn green sel" id="crPerToday" onclick="crPeriod('today')">Бугун</div>
-          <div class="seg-btn" id="crPerRange" onclick="crPeriod('range')">Давр</div>
-          <div class="seg-btn" id="crPerAll" onclick="crPeriod('all')">Ҳаммаси</div>
+          <div class="seg-btn green sel" id="crPerToday" onclick="crPeriod('today')" data-i18n="today">Бугун</div>
+          <div class="seg-btn" id="crPerRange" onclick="crPeriod('range')" data-i18n="period">Давр</div>
+          <div class="seg-btn" id="crPerAll" onclick="crPeriod('all')" data-i18n="all">Ҳаммаси</div>
         </div>
         <div class="row2 hidden" id="crRangeBox" style="margin-bottom:12px;">
           <div><label data-i18n="lblFrom">С даты</label><input type="date" id="crFrom"></div>
           <div><label data-i18n="lblTo">По дату</label><input type="date" id="crTo"></div>
         </div>
-        <button class="submit" id="crBtn" onclick="crBuild()">Тайёрлаш</button>
+        <button class="submit" id="crBtn" onclick="crBuild()" data-i18n="prepare">Тайёрлаш</button>
       </div>
       <div id="crResult"></div>
     </div>
@@ -618,7 +621,7 @@
     newRegionQ:'Название нового региона:', regionCreated:'Регион создан', newShort:'Новый',
     createRegionHint:'Создайте регион кнопкой +',
     take:'Принять', give:'Выдать', client:'Клиент:', toWhom:'Кому:', tel:'Тел:', memo:'Прим:',
-    transFrom:'С кого снять долг (станет Хакдор +)', transTo:'На кого повесить (станет Карздор −)',
+    transFrom:'С кого снять долг (станет кредитор +)', transTo:'На кого повесить (станет должник −)',
     doTransfer:'Выполнить перевод', transferDone:'Перевод выполнен', noTransfers:'Переводов нет',
     pickBoth:'Выберите клиентов', transferQ:'Выполнить перевод {f} → {t}?',
     subCancel:'Отмена', subClients:'Клиенты', subRecalc:'Пересчёт',
@@ -629,10 +632,12 @@
     editTitle:'Правка: имя / комментарий', editSaved:'Исправлено', editNothing:'Нечего менять',
     newDateQ:'Новая дата (гггг-мм-дд):', dateFmt:'Формат: гггг-мм-дд', dateChanged:'Дата изменена',
     execConfirm:'⚠️ Сделка УЖЕ ИСПОЛНЕНА ({e}, {t}). Деньги могли быть выданы. Точно отменить?',
-    balHak:'Хакдоры', balKarz:'Карздоры', weMustGive:'мы должны отдать', theyMustGive:'нам должны',
-    balAll:'Все', balHakF:'Хакдор', balKarzF:'Карздор', noClients:'Клиентов нет', searchName:'Поиск по имени...',
+    balHak:'Кредиторы', balKarz:'Должники', weMustGive:'мы должны отдать', theyMustGive:'нам должны',
+    balAll:'Все', balHakF:'Кредиторы', balKarzF:'Должники', noClients:'Клиентов нет', searchName:'Поиск по имени...',
     curBalance:'Текущий остаток', weOweYou:'мы должны', youOwe:'долг клиента', even:'ровно',
     dealsTitle:'Сделки', makeReport:'Подготовить отчёт (WhatsApp)', loadFirst:'Сначала загрузите сделки',
+    rptBalance:'Баланс клиентов', rptDaily:'Ежедневные', rptOverview:'Общее состояние',
+    dlNoneT:'Сегодня сделок нет', dlNoneY:'Вчера сделок не было', dlActive:'Активные', dlSentSec:'Отправлено', dlDeals:'сделок', dlSentMark:'отправлено', prepare:'Подготовить',
     startWord:'Начальный', transferWord:'Перевод', balAfter:'остаток',
     clientLink:'Ссылка клиенту', linkActive:'Ссылка активна', linkNone:'Ссылка ещё не создана',
     makeLink:'Создать ссылку', newLink:'Новая ссылка', revoke:'Отозвать', linkReady:'Ссылка готова',
@@ -645,7 +650,7 @@
     allLinks:'Ссылки всем', ready:'Готово', readyNew:'Готово: новых {c}, было {e}',
     mkShow:'Показать', mijozHint:'🔗 Кабинет клиента: создать / обновить / отозвать личную ссылку. Отправьте её клиенту в WhatsApp.',
     startHint:'⚖️ Начальный остаток: стартовый баланс клиента (кому должны / с кого получаем).',
-    hak:'Хакдор (+)', karz:'Карздор (−)', writeStart:'Записать остаток', startSaved:'Остаток записан',
+    hak:'Кредитор (+)', karz:'Должник (−)', writeStart:'Записать остаток', startSaved:'Остаток записан',
     csHint:'👥 Сверка клиентов: Операции ↔ База. Кого нет в Базе (не попадёт в подсказки) и кто в Базе без операций. Обновляет лист «Сверка_клиентов». Ничего не меняет.',
     csBtn:'Сверить клиентов', csWait:'Сверяем…',
     rcHint:'Аварийная кнопка. Пересчитывает кассы регионов из всех неотменённых операций.',
@@ -654,7 +659,7 @@
     rcmBtn:'Пересчитать прибыль (месяц)', rcmQ:'Пересчитать прибыль за месяц? Прибыль всех продаж будет перезаписана.',
     rcmDone:'{c} сделок обновлено',
     reportSummary:'Итог', avgRate:'ср. курс', profitLbl:'Прибыль:', pcs:'шт.',
-    ovAssets:'Активы (где деньги)', ovLiab:'Обязательства (чьи деньги)', ovTotalA:'ИТОГО АКТИВ', ovTotal:'ИТОГО', ovKarz:'Карздоры', ovKarzSub:'должны нам', ovHak:'Хакдоры', ovHakSub:'мы должны', ovProfit:'Прибыль (всего)', ovFarq:'Фарк (актив − обязательства)', ovZero:'0 = полное совпадение', ovBal:'Остаток', ovCash:'нал.',
+    ovAssets:'Активы (где деньги)', ovLiab:'Обязательства (чьи деньги)', ovTotalA:'ИТОГО АКТИВ', ovTotal:'ИТОГО', ovKarz:'Должники', ovKarzSub:'должны нам', ovHak:'Кредиторы', ovHakSub:'мы должны', ovProfit:'Прибыль (всего)', ovFarq:'Разница (актив − обязательства)', ovZero:'0 = полное совпадение', ovBal:'Остаток', ovCash:'нал.',
     uzLang:'Ўзбекча', ruLang:'Русский', updBar:'Новая версия (v{v})', updBtn:'Обновить'
   },
   uz:{
@@ -711,6 +716,8 @@
     balAll:'Ҳаммаси', balHakF:'Ҳақдор', balKarzF:'Қарздор', noClients:'Мижоз йўқ', searchName:'Исм бўйича қидириш...',
     curBalance:'Жорий қолдиқ', weOweYou:'сизга қарзимиз', youOwe:'қарзингиз', even:'тенг',
     dealsTitle:'Сделкалар', makeReport:'Ҳисобот тайёрлаш (WhatsApp)', loadFirst:'Аввал сделкаларни юкланг',
+    rptBalance:'Мижозлар баланси', rptDaily:'Кунлик', rptOverview:'Умумий ҳолат',
+    dlNoneT:'Бугун сделка йўқ', dlNoneY:'Кеча сделка бўлмаган', dlActive:'Фаол', dlSentSec:'Юборилди', dlDeals:'та сделка', dlSentMark:'юборилди', prepare:'Тайёрлаш',
     startWord:'Бошланғич', transferWord:'Перевод', balAfter:'қолдиқ',
     clientLink:'Мижозга ҳавола', linkActive:'Ҳавола фаол', linkNone:'Ҳавола ҳали яратилмаган.',
     makeLink:'Ҳавола яратиш', newLink:'Янги ҳавола', revoke:'Бекор қилиш', linkReady:'Ҳавола тайёр',
@@ -770,7 +777,7 @@
   var DB=[];
   ['opName','opNameU','opNameG','opNameR','opNameRep'].forEach(function(id){var e=document.getElementById(id); if(e)e.textContent=USER_NAME||'—';});
 
-  function TAB_LABELS_(){return {moscow:['М',t('tabMoscow')],uzb:['У',t('tabUzb')],region:['Ҳ',t('tabRegion')],req:['С',t('tabReq')],transfer:['П',t('tabTransfer')],admin:['✎',t('tabAdmin')],reports:['О',t('tabReports')]};}
+  function TAB_LABELS_(){return {moscow:['М',t('tabMoscow')],uzb:['У',t('tabUzb')],region:['Р',t('tabRegion')],req:['С',t('tabReq')],transfer:['П',t('tabTransfer')],admin:['✎',t('tabAdmin')],reports:['О',t('tabReports')]};}
   var TABS={
     operator1:['moscow'],
     operator2:['moscow','uzb','region','reports'],
@@ -879,7 +886,7 @@
     document.getElementById('mDirUR').classList.toggle('sel',d==='UR'); document.getElementById('mDirRU').classList.toggle('sel',d==='RU');
     document.getElementById('mExLbl1').textContent=d==='UR'?'Бердим $':'Бердим ₽';
     document.getElementById('mExLbl2').textContent=d==='UR'?'Олдим ₽':'Олдим $';
-    document.getElementById('mExA').value=''; document.getElementById('mExB').value=''; mCalcRate();
+    document.getElementById('mExA').value=''; document.getElementById('mExB').value=''; document.getElementById('mRate').value=''; mExTouch=[]; mCalcRate();
   }
   function mToggleUsd(){
     var on=document.getElementById('mUsdSwitch').checked;
@@ -887,14 +894,45 @@
     // либо доллары, либо рубли: при $ рублёвое поле прячем и чистим
     document.getElementById('mRubField').classList.toggle('hidden',on);
     if(on){document.getElementById('mRub').value='';}
-    else{document.getElementById('mUsd').value=''; document.getElementById('mUsdRate').value='';}
+    else{document.getElementById('mUsd').value=''; document.getElementById('mUsdRate').value=''; document.getElementById('mUsdRub').value=''; mUsdRubEdited=false;}
   }
+  /* $-операция клиенту: рубль (факт) = usd×курс, редактируемый — как в регионах */
+  var mUsdRubEdited=false;
+  function mUsdCalc(){
+    var usd=moneyVal('mUsd'), rate=parseFloat(String(document.getElementById('mUsdRate').value).replace(',','.'))||0;
+    if(!mUsdRubEdited){var ri=document.getElementById('mUsdRub'); if(usd>0&&rate>0) ri.value=Math.round(usd*rate).toLocaleString('ru-RU'); else ri.value='';}
+    mUsdHintUpd();
+  }
+  function mUsdRubEdit(){mUsdRubEdited=true; mUsdHintUpd();}
+  function mUsdHintUpd(){
+    var usd=moneyVal('mUsd'), rate=parseFloat(String(document.getElementById('mUsdRate').value).replace(',','.'))||0, rub=moneyVal('mUsdRub');
+    var h=document.getElementById('mUsdHint');
+    if(usd>0&&rub>0){
+      var eff=rub/usd, effTxt='≈ '+t('rate')+' '+(Math.round(eff*1e6)/1e6).toString().replace('.',',');
+      if(!mUsdRubEdited&&rate>0) h.textContent=t('suggest')+usd+' × '+String(rate).replace('.',',')+' = '+fmt(usd*rate)+' ₽ · '+effTxt;
+      else h.innerHTML='<span class="ed">'+effTxt+'</span> · '+t('toAccount')+' '+fmt(rub)+' ₽';
+    } else if(usd>0&&rate>0) h.textContent=t('suggest')+usd+' × '+String(rate).replace('.',',')+' = '+fmt(usd*rate)+' ₽';
+    else h.textContent=t('musdHint');
+  }
+  /* обмен: три связанных поля. Два последних тронутых — источники, третье пересчитывается */
+  var mExTouch=[];
+  function mExInput(k){ mExTouch=mExTouch.filter(function(x){return x!==k;}); mExTouch.push(k); if(mExTouch.length>2)mExTouch.shift(); mCalcRate(); }
+  function mExRateVal(){ return parseFloat(String(document.getElementById('mRate').value).replace(/\s/g,'').replace(',','.'))||0; }
   function mCalcRate(){
-    var a=moneyVal('mExA'),b=moneyVal('mExB'),rub,usd;
-    if(mDirCur==='UR'){usd=a;rub=b;}else{rub=a;usd=b;}
-    var box=document.getElementById('mRateCalc'),ri=document.getElementById('mRate');
-    if(rub>0&&usd>0){var rate=Math.round((rub/usd)*100)/100; ri.value=String(rate).replace('.',','); box.textContent=usd+' $ ≈ '+fmt(rub)+' ₽ · курс '+String(rate).replace('.',',');}
-    else{ri.value=''; box.textContent='Суммани киритинг — курс ўзи ҳисобланади';}
+    var box=document.getElementById('mRateCalc'), ri=document.getElementById('mRate');
+    var target=(mExTouch.length===2)?['A','B','R'].filter(function(k){return mExTouch.indexOf(k)===-1;})[0]:'R';
+    var a=moneyVal('mExA'), b=moneyVal('mExB'), r=mExRateVal();
+    if(target==='R'){
+      if(a>0&&b>0){ var usd0=mDirCur==='UR'?a:b, rub0=mDirCur==='UR'?b:a; r=Math.round((rub0/usd0)*100)/100; ri.value=String(r).replace('.',','); }
+      else if(mExTouch.indexOf('R')===-1){ ri.value=''; }
+    } else if(target==='B'){
+      if(a>0&&r>0){ var nb=(mDirCur==='UR')?Math.round(a*r):Math.round(a/r); document.getElementById('mExB').value=nb.toLocaleString('ru-RU'); }
+    } else {
+      if(b>0&&r>0){ var na=(mDirCur==='UR')?Math.round(b/r):Math.round(b*r); document.getElementById('mExA').value=na.toLocaleString('ru-RU'); }
+    }
+    var usd=mDirCur==='UR'?moneyVal('mExA'):moneyVal('mExB'), rub=mDirCur==='UR'?moneyVal('mExB'):moneyVal('mExA'); r=mExRateVal();
+    if(usd>0&&rub>0&&r>0) box.textContent=fmt(usd)+' $ ≈ '+fmt(rub)+' ₽ · '+t('rate')+' '+String(r).replace('.',',');
+    else box.textContent=t('rateAuto');
   }
   function mSubmit(){
     if(!mAction){toast(t('pickAction'),true); return;}
@@ -914,6 +952,7 @@
         var mur=String(document.getElementById('mUsdRate').value||'').trim();
         if(!(parseFloat(mur.replace(',','.'))>0)){toast(t('enterRate'),true); return;}
         p.rate=mur;
+        p.usdRub=moneyVal('mUsdRub');   // факт ₽ (правленный или авто usd×курс)
       }
     }
     var key=JSON.stringify(p),now=Date.now();
@@ -933,8 +972,8 @@
   }
   function mReset(){
     document.querySelectorAll('#scr-moscow .act-btn').forEach(function(b){b.classList.remove('sel');}); mAction=null;
-    ['mName','mRub','mUsd','mUsdRate','mNote','mExA','mExB','mRate','mOpDate'].forEach(function(id){var e=document.getElementById(id); if(e)e.value='';});
-    document.getElementById('mUsdSwitch').checked=false; document.getElementById('mUsdField').classList.add('hidden');
+    ['mName','mRub','mUsd','mUsdRate','mUsdRub','mNote','mExA','mExB','mRate','mOpDate'].forEach(function(id){var e=document.getElementById(id); if(e)e.value='';});
+    document.getElementById('mUsdSwitch').checked=false; document.getElementById('mUsdField').classList.add('hidden'); mUsdRubEdited=false; mExTouch=[];
     document.getElementById('mNameField').classList.remove('hidden'); document.getElementById('mRubField').classList.remove('hidden');
     document.getElementById('mUsdToggleField').classList.remove('hidden'); document.getElementById('mExchField').classList.add('hidden'); mCalcRate();
   }
@@ -1559,11 +1598,10 @@
     res.items.forEach(function(it){
       var rateTxt=it.rate?(' · '+t('rate')+' '+String(it.rate).replace('.',',')):'';
       var canEdit=(it.action==='Олдим'||it.action==='Бердим');
-      var fieldBtn=(it.action!=='Обмен'&&it.status!=='итог')?'<button class="btn-share" style="padding:9px 12px;" onclick=\'aFieldEdit('+JSON.stringify({id:it.id,name:it.name,note:it.note}).replace(/'/g,"&#39;")+')\'>✎</button>':'';
-      var editBtn=canEdit?'<button class="btn-share" style="padding:9px 12px;" onclick=\'aEdit('+JSON.stringify(it).replace(/'/g,"&#39;")+')\'>'+t('fixBtn')+'</button>':'';
-      var dateBtn='<button class="btn-share" style="padding:9px 12px;" onclick="aChangeDate(\''+esc(it.id)+'\')">📅</button>';
-      editBtn=dateBtn+fieldBtn+editBtn;
-      h+='<div class="cancel-item"><div class="info"><div class="t">'+esc(it.action)+' · '+esc(it.name||'—')+' · '+(it.usd?'$'+fmt(it.usd):'')+(it.rub?' '+fmt(it.rub)+'₽':'')+rateTxt+'</div><div class="m">'+it.time+' · '+esc(it.region||'')+' · '+esc(it.operator)+' · '+esc(it.status)+'</div></div><div style="display:flex;gap:6px;flex:0 0 auto;">'+editBtn+'<button class="btn-cancel" data-id="'+esc(it.id)+'" onclick="aCancel(this)">'+t('cancelBtn')+'</button></div></div>';
+      var fieldBtn=(it.action!=='Обмен'&&it.status!=='итог')?'<button class="cbtn" title="'+t('editTitle')+'" onclick=\'aFieldEdit('+JSON.stringify({id:it.id,name:it.name,note:it.note}).replace(/'/g,"&#39;")+')\'>✎</button>':'';
+      var editBtn=canEdit?'<button class="cbtn" title="'+t('fixBtn')+'" onclick=\'aEdit('+JSON.stringify(it).replace(/'/g,"&#39;")+')\'>↻</button>':'';
+      var dateBtn='<button class="cbtn" title="📅" onclick="aChangeDate(\''+esc(it.id)+'\')">📅</button>';
+      h+='<div class="cancel-item"><div class="info"><div class="t">'+esc(it.action)+' · '+esc(it.name||'—')+' · '+(it.usd?'$'+fmt(it.usd):'')+(it.rub?' '+fmt(it.rub)+'₽':'')+rateTxt+'</div><div class="m">'+it.time+' · '+esc(it.region||'')+' · '+esc(it.operator)+' · '+esc(it.status)+'</div></div><div class="acts">'+dateBtn+fieldBtn+editBtn+'<button class="cbtn red" data-id="'+esc(it.id)+'" onclick="aCancel(this)">✕</button></div></div>';
     });
     box.innerHTML=h;
   }
@@ -1646,6 +1684,7 @@
         document.getElementById('mUsdSwitch').checked=true; mToggleUsd();
         document.getElementById('mUsd').value=Number(Math.abs(it.usd)).toLocaleString('ru-RU');
         if(it.rate){document.getElementById('mUsdRate').value=String(it.rate);}
+        mUsdCalc();
       } else {
         document.getElementById('mRub').value=it.rub?Number(it.rub).toLocaleString('ru-RU'):'';
       }
@@ -1808,16 +1847,16 @@
   function dlRender(clients){
     clients=clients||dlClients;     // если не передали — из памяти
     var box=document.getElementById('dlList');
-    if(!clients.length){ box.innerHTML='<div class="empty">'+(dlDayVal==='yesterday'?'Кеча сделка бўлмаган':'Бугун сделка йўқ')+'</div>'; return; }
+    if(!clients.length){ box.innerHTML='<div class="empty">'+(dlDayVal==='yesterday'?t('dlNoneY'):t('dlNoneT'))+'</div>'; return; }
     var active=clients.filter(function(c){return !c.sent;});
     var sent=clients.filter(function(c){return c.sent;});
     var h='';
     if(active.length){
-      h+='<div class="sec-title" style="margin-top:0;">Фаол <span class="badge">'+active.length+'</span></div>';
+      h+='<div class="sec-title" style="margin-top:0;">'+t('dlActive')+' <span class="badge">'+active.length+'</span></div>';
       active.forEach(function(c){ h+=dlCard(c); });
     }
     if(sent.length){
-      h+='<div class="sec-title">Юборилди</div>';
+      h+='<div class="sec-title">'+t('dlSentSec')+'</div>';
       sent.forEach(function(c){ h+=dlCard(c); });
     }
     box.innerHTML=h;
@@ -1830,7 +1869,7 @@
       '<div class="req-top" style="margin-bottom:'+(op?'10px':'0')+';">'+
       '<div onclick="dlToggle(\''+safeName+'\')" style="cursor:pointer;flex:1;">'+
       '<div class="nm" style="font-size:15px;font-weight:600;">'+esc(c.name)+'</div>'+
-      '<div class="req-meta" style="margin-top:3px;">'+c.count+' та сделка'+(c.sent?' · ✓ юборилди':'')+'</div></div>'+
+      '<div class="req-meta" style="margin-top:3px;">'+c.count+' '+t('dlDeals')+(c.sent?' · ✓ '+t('dlSentMark'):'')+'</div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;">'+
         '<div onclick="dlToggle(\''+safeName+'\')" style="width:38px;height:38px;border-radius:10px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:'+(op?'var(--accent)':'var(--muted)')+';cursor:pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></div>'+
       '</div></div>'+
@@ -1938,11 +1977,11 @@
     var btn=document.getElementById('crBtn'); btn.disabled=true; btn.textContent='…';
     document.getElementById('crResult').innerHTML='<div class="loading">…</div>';
     apiCall('getClientReport',{name:name,dateFrom:from,dateTo:to,lang:crLangVal},AUTH_TOKEN).then(function(res){
-      btn.disabled=false; btn.textContent='Тайёрлаш';
+      btn.disabled=false; btn.textContent=t('prepare');
       if(!res||!res.ok){ document.getElementById('crResult').innerHTML='<div class="empty">'+((res&&res.error)||t('err'))+'</div>'; return; }
       crText=res.text; crPhone=res.phone||'';
       crShow();
-    }).catch(function(){btn.disabled=false; btn.textContent='Тайёрлаш'; document.getElementById('crResult').innerHTML='<div class="empty">'+t('connLost')+'</div>';});
+    }).catch(function(){btn.disabled=false; btn.textContent=t('prepare'); document.getElementById('crResult').innerHTML='<div class="empty">'+t('connLost')+'</div>';});
   }
   function crShow(){
     var waBtn = crPhone
@@ -2323,15 +2362,15 @@
     apiCall('cancelOperation',{opId:id,force:force},AUTH_TOKEN).then(function(res){
       if(res.ok){ showOk(t('cancelled'),''); aLoadCancel(); return; }
       if(res.needConfirm){
-        if(btn){ btn.disabled=false; btn.textContent=t('cancelBtn'); }
+        if(btn){ btn.disabled=false; btn.textContent='✕'; }
         askConfirm(t('execConfirm',{e:res.executor||'?',t:res.time||''}), function(){
           doCancel(id, true, btn);
         });
         return;
       }
-      if(btn){ btn.disabled=false; btn.textContent=t('cancelBtn'); }
+      if(btn){ btn.disabled=false; btn.textContent='✕'; }
       toast(res.error||t('err'),true);
-    }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent=t('cancelBtn'); } toast(t('connLost'),true); });
+    }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='✕'; } toast(t('connLost'),true); });
   }
   function doEditCancel(it, force){
     apiCall('cancelOperation',{opId:it.id,force:force},AUTH_TOKEN).then(function(res){
@@ -2352,7 +2391,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 6;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
+  var APP_VERSION = 7;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
   (function(){
     // номер версии внизу экрана (для сверки глазами); bottom:74px — чтобы не прятался под кнопкой ⟳
     var v=document.createElement('div');
