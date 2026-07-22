@@ -475,10 +475,12 @@
 
   <div class="screen hidden" id="scr-reports">
     <div class="head"><div><h1 data-i18n="hReports">Ҳисоботлар</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameRep">…</span></div></div></div>
-    <div class="sub-tabs" id="repSubTabs">
+    <div class="sub-tabs" id="repSubTabs" style="overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;">
       <div class="sub-tab sel" id="rtab-balance" onclick="repTab('balance')" data-i18n="rptBalance">Мижозлар баланси</div>
       <div class="sub-tab" id="rtab-daily" onclick="repTab('daily')" data-i18n="rptDaily">Кунлик</div>
       <div class="sub-tab" id="rtab-overview" onclick="repTab('overview')" data-i18n="rptOverview">Умумий ҳолат</div>
+      <div class="sub-tab" id="rtab-monthly" onclick="repTab('monthly')" data-i18n="rptMonthly">Ойлик</div>
+      <div class="sub-tab" id="rtab-history" onclick="repTab('history')" data-i18n="rptHistory">Тарих</div>
     </div>
     <div id="repPane-balance">
       <div class="counter">
@@ -533,6 +535,20 @@
 
     <div id="repPane-overview" class="hidden">
       <div id="ovBox"><div class="loading">…</div></div>
+    </div>
+    <div id="repPane-monthly" class="hidden">
+      <div class="row2" style="margin-bottom:10px;">
+        <div><label data-i18n="lblMonth">Месяц</label><select id="moMonth" onchange="moLoad()"></select></div>
+        <div><label data-i18n="lblPlace">Место</label><select id="moPlace" onchange="moLoad()"></select></div>
+      </div>
+      <div id="moBox"><div class="loading">…</div></div>
+    </div>
+    <div id="repPane-history" class="hidden">
+      <div class="row2" style="margin-bottom:10px;">
+        <div><label data-i18n="lblPlace">Место</label><select id="thPlace" onchange="thLoad()"></select></div>
+        <div><label data-i18n="lblPeriod2">Период</label><select id="thPeriod" onchange="thLoad()"></select></div>
+      </div>
+      <div id="thBox"><div class="loading">…</div></div>
     </div>
   </div>
 
@@ -637,6 +653,11 @@
     curBalance:'Текущий остаток', weOweYou:'мы должны', youOwe:'долг клиента', even:'ровно',
     dealsTitle:'Сделки', makeReport:'Подготовить отчёт (WhatsApp)', loadFirst:'Сначала загрузите сделки',
     rptBalance:'Баланс клиентов', rptDaily:'Ежедневные', rptOverview:'Общее состояние',
+    rptMonthly:'Месячный', rptHistory:'История', lblMonth:'Месяц', lblPlace:'Место', lblPeriod2:'Период',
+    daysW:'дней', moProfit:'Прибыль', moBuys:'Закупки', moSells:'Продажи', moTotal:'Итого', moOps:'операций',
+    moTurnover:'оборот', moStart:'Начало', moEnd:'Конец', moCash:'Касса ₽', noOps2:'Операций нет', exchange:'Обмен',
+    thDay:'День', thBal:'Остаток $', thAvg:'Ср.', thDelta:'За день', thCash:'Касса ₽',
+    wd:'вс,пн,вт,ср,чт,пт,сб', monthNames:'январь,февраль,март,апрель,май,июнь,июль,август,сентябрь,октябрь,ноябрь,декабрь',
     dlNoneT:'Сегодня сделок нет', dlNoneY:'Вчера сделок не было', dlActive:'Активные', dlSentSec:'Отправлено', dlDeals:'сделок', dlSentMark:'отправлено', prepare:'Подготовить',
     startWord:'Начальный', transferWord:'Перевод', balAfter:'остаток',
     clientLink:'Ссылка клиенту', linkActive:'Ссылка активна', linkNone:'Ссылка ещё не создана',
@@ -717,6 +738,11 @@
     curBalance:'Жорий қолдиқ', weOweYou:'сизга қарзимиз', youOwe:'қарзингиз', even:'тенг',
     dealsTitle:'Сделкалар', makeReport:'Ҳисобот тайёрлаш (WhatsApp)', loadFirst:'Аввал сделкаларни юкланг',
     rptBalance:'Мижозлар баланси', rptDaily:'Кунлик', rptOverview:'Умумий ҳолат',
+    rptMonthly:'Ойлик', rptHistory:'Тарих', lblMonth:'Ой', lblPlace:'Жой', lblPeriod2:'Давр',
+    daysW:'кун', moProfit:'Фойда', moBuys:'Харид', moSells:'Сотув', moTotal:'Жами', moOps:'та операция',
+    moTurnover:'айланма', moStart:'Бошида', moEnd:'Охирида', moCash:'Касса ₽', noOps2:'Операция йўқ', exchange:'Обмен',
+    thDay:'Кун', thBal:'Қолдиқ $', thAvg:'Ўрт.', thDelta:'Кун ичида', thCash:'Касса ₽',
+    wd:'як,ду,се,чо,па,жу,ша', monthNames:'январь,февраль,март,апрель,май,июнь,июль,август,сентябрь,октябрь,ноябрь,декабрь',
     dlNoneT:'Бугун сделка йўқ', dlNoneY:'Кеча сделка бўлмаган', dlActive:'Фаол', dlSentSec:'Юборилди', dlDeals:'та сделка', dlSentMark:'юборилди', prepare:'Тайёрлаш',
     startWord:'Бошланғич', transferWord:'Перевод', balAfter:'қолдиқ',
     clientLink:'Мижозга ҳавола', linkActive:'Ҳавола фаол', linkNone:'Ҳавола ҳали яратилмаган.',
@@ -800,9 +826,9 @@
     var cl=document.getElementById('scr-client'); if(cl) cl.classList.add('hidden');
     var t=document.getElementById('scr-'+name); if(t)t.classList.remove('hidden');
     if(el){document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('sel');}); el.classList.add('sel');}
-    if(name==='moscow'){mOpen();}
-    if(name==='uzb'){uOpen();}
-    if(name==='region'){gInitRegions();}
+    if(name==='moscow'){mOpen(); refreshDB();}
+    if(name==='uzb'){uOpen(); refreshDB();}
+    if(name==='region'){gInitRegions(); refreshDB();}
     if(name==='req'){rRefresh();}
     if(name==='admin'){aLoadCancel();}
     if(name==='transfer'){tRefreshFeed();}
@@ -846,6 +872,7 @@
       });
       name = vis[0] || 'moscow';
     }
+    refreshDB(true);   // список клиентов тоже освежаем
     showScreen(name);
     toast(t('refreshed'));
   }
@@ -1757,7 +1784,8 @@
   var OV_DATA=null, CL_CACHE={}, clClosing=0, clKeyInfo=null;   // V5: кэш для мгновенных списков
   function repInit(){ repTab('balance'); }
   function repTab(name){
-    ['balance','daily','overview'].forEach(function(t){
+    if(USER_ROLE==='report'&&name==='daily') return;   // Кунлик закрыт для роли report
+    ['balance','daily','overview','monthly','history'].forEach(function(t){
       var tab=document.getElementById('rtab-'+t), pane=document.getElementById('repPane-'+t);
       if(tab) tab.classList.toggle('sel', t===name);
       if(pane) pane.classList.toggle('hidden', t!==name);
@@ -1765,6 +1793,8 @@
     if(name==='balance') balLoad();
     if(name==='daily') dlLoad();
     if(name==='overview') ovLoad();
+    if(name==='monthly') moInit();
+    if(name==='history') thInit();
   }
   function ovLoad(){
     if(OV_DATA) ovRender(OV_DATA);   // мгновенно из памяти
@@ -1984,7 +2014,7 @@
     }).catch(function(){btn.disabled=false; btn.textContent=t('prepare'); document.getElementById('crResult').innerHTML='<div class="empty">'+t('connLost')+'</div>';});
   }
   function crShow(){
-    var waBtn = crPhone
+    var waBtn = (USER_ROLE==='report') ? '' : crPhone
       ? '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/'+crPhone+'?text='+encodeURIComponent(crText)+'" target="_blank">WhatsApp</a>'
       : '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/?text='+encodeURIComponent(crText)+'" target="_blank">WhatsApp '+t('noNumber')+'</a>';
     var h='<div class="card">'+
@@ -2133,7 +2163,7 @@
   function clBuildReport(){
     if(!clReportText){ toast(t('loadFirst'),true); return; }
     var enc=encodeURIComponent(clReportText);
-    var wa = clReportPhone
+    var wa = (USER_ROLE==='report') ? '' : clReportPhone
       ? '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/'+clReportPhone+'?text='+enc+'" target="_blank">WhatsApp</a>'
       : '<a class="btn-done" style="text-decoration:none;display:flex;align-items:center;justify-content:center;" href="https://wa.me/?text='+enc+'" target="_blank">WhatsApp '+t('noNumber')+'</a>';
     document.getElementById('clReportResult').innerHTML=
@@ -2391,7 +2421,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 7;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
+  var APP_VERSION = 8;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
   (function(){
     // номер версии внизу экрана (для сверки глазами); bottom:74px — чтобы не прятался под кнопкой ⟳
     var v=document.createElement('div');
@@ -2432,6 +2462,7 @@
     var now=Date.now();
     if(now-_visLast<30000) return;
     _visLast=now;
+    refreshDB(true);   // клиенты могли добавиться с другого устройства
     var cur=document.querySelector('.tab.sel');
     var name=cur?cur.getAttribute('data-s'):null;
     if(!name) return;
@@ -2442,11 +2473,148 @@
     // Правки/Переводы/Отчёты не трогаем — там формы и ручные фильтры
   });
 
+  /* ===== ОЙЛИК (месячный отчёт) + ТАРИХ (история остатков) ===== */
+  var MO_REGIONS=null, MO_DATA=null, moSide='buys', MO_INIT=false, TH_INIT=false;
+  function moMonths_(){
+    var out=[], d=new Date(), y=d.getFullYear(), m=d.getMonth()+1;
+    while(y>2026 || (y===2026&&m>=6)){ out.push(y+'-'+('0'+m).slice(-2)); m--; if(m===0){m=12;y--;} }
+    return out;
+  }
+  function moName_(mk){ var p=mk.split('-'); return t('monthNames').split(',')[parseInt(p[1],10)-1]+' '+p[0]; }
+  function moPlaces_(cb){
+    if(MO_REGIONS){ cb(); return; }
+    apiCall('getRegions',{},AUTH_TOKEN).then(function(list){
+      MO_REGIONS=['Москва'].concat(list||[]);
+      var opts=MO_REGIONS.map(function(r){return '<option value="'+esc(r)+'">'+esc(r)+'</option>';}).join('');
+      document.getElementById('moPlace').innerHTML=opts;
+      document.getElementById('thPlace').innerHTML=opts;
+      document.getElementById('moMonth').innerHTML=moMonths_().map(function(mk){return '<option value="'+mk+'">'+moName_(mk)+'</option>';}).join('');
+      document.getElementById('thPeriod').innerHTML=
+        '<option value="d10">10 '+t('daysW')+'</option><option value="d30">30 '+t('daysW')+'</option>'+
+        moMonths_().map(function(mk){return '<option value="m'+mk+'">'+moName_(mk)+'</option>';}).join('');
+      cb();
+    }).catch(function(){ cb(); });
+  }
+  function moInit(){ moPlaces_(function(){ if(!MO_INIT){MO_INIT=true;} moLoad(); }); }
+  function thInit(){ moPlaces_(function(){ if(!TH_INIT){TH_INIT=true;} thLoad(); }); }
+
+  function moLoad(){
+    var box=document.getElementById('moBox'); box.innerHTML='<div class="loading">…</div>';
+    var month=document.getElementById('moMonth').value, place=document.getElementById('moPlace').value;
+    if(!month||!place){ box.innerHTML='<div class="empty">'+t('err')+'</div>'; return; }
+    apiCall('getMonthlyReport',{month:month,place:place},AUTH_TOKEN).then(function(r){
+      if(!r||!r.ok){ box.innerHTML='<div class="empty">'+((r&&r.error)||t('err'))+'</div>'; return; }
+      MO_DATA=r; moRender();
+    }).catch(function(){ box.innerHTML='<div class="empty">'+t('connLost')+'</div>'; });
+  }
+  function moSideSet(sd){ moSide=sd; moRender(); }
+  function moRateTxt_(rt){ var n=parseFloat(String(rt).replace(',','.')); return (n>0)?(' × '+String(Math.round(n*100)/100).replace('.',',')):''; }
+  function moRender(){
+    var r=MO_DATA; if(!r) return;
+    var isM=(r.place==='Москва');
+    var pc=r.profit>0?'var(--plus)':(r.profit<0?'var(--minus)':'var(--txt)');
+    var h='<div class="card" style="margin-top:0;">'+
+      '<div style="font-size:12px;color:var(--muted);">'+t('moProfit')+' · '+moName_(r.month)+' · '+esc(r.place)+'</div>'+
+      '<div style="font-size:26px;font-weight:700;color:'+pc+';margin-top:2px;">'+(r.profit>0?'+':'')+fmt(r.profit)+' ₽</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px;">'+r.opsCount+' '+t('moOps')+' · '+t('moTurnover')+' $'+fmt(r.turnoverUsd)+'</div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:8px;">'+
+        '<span>'+t('moStart')+': $'+fmt(r.opening.usd)+' · '+String(r.opening.avg).replace('.',',')+'</span>'+
+        '<span>'+t('moEnd')+': $'+fmt(r.closing.usd)+' · '+String(r.closing.avg).replace('.',',')+'</span></div>'+
+      (isM?'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;">'+
+        '<span>'+t('moCash')+': '+fmt(r.opening.cash)+' ₽</span><span>'+fmt(r.closing.cash)+' ₽</span></div>':'')+
+      '</div>';
+    var seg=function(id,lbl,d){
+      var sel=(moSide===id);
+      return '<div class="seg-btn'+(sel?(id==='buys'?' green sel':' sel'):'')+'" style="flex:1;" onclick="moSideSet(\''+id+'\')">'+lbl+
+        '<div style="font-size:10px;font-weight:400;opacity:.8;">$'+fmt(d.usd)+'</div></div>';
+    };
+    h+='<div class="seg-row" style="display:flex;gap:6px;margin:12px 0 10px;">'+seg('buys',t('moBuys'),r.buys)+seg('sells',t('moSells'),r.sells)+'</div>';
+    var d=(moSide==='buys')?r.buys:r.sells;
+    h+='<div class="card" style="margin-top:0;padding:4px 14px;">';
+    if(!d.items.length){ h+='<div class="empty">'+t('noOps2')+'</div>'; }
+    else{
+      d.items.forEach(function(it){
+        var who=(it.action==='Обмен')?t('exchange'):(esc(it.action)+(it.name?' · '+esc(it.name):''));
+        h+='<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;">'+
+          '<span style="color:var(--muted);">'+it.d+' · '+who+'</span>'+
+          '<span style="white-space:nowrap;">$'+fmt(it.usd)+moRateTxt_(it.rate)+'</span></div>';
+      });
+      h+='<div style="display:flex;justify-content:space-between;padding:9px 0;font-weight:600;font-size:13px;">'+
+        '<span>'+t('moTotal')+' · '+d.count+'</span><span>$'+fmt(d.usd)+' · '+fmt(d.rub)+' ₽</span></div>';
+    }
+    h+='</div>';
+    h+='<button class="btn-share" style="width:100%;margin-top:10px;" onclick="moCopy()">'+t('copy')+'</button>';
+    document.getElementById('moBox').innerHTML=h;
+  }
+  function moText_(){
+    var r=MO_DATA; if(!r) return '';
+    var L=[];
+    L.push('📊 '+esc(r.place)+' · '+moName_(r.month));
+    L.push(t('moProfit')+': '+(r.profit>0?'+':'')+fmt(r.profit)+' ₽');
+    L.push(t('moBuys')+': $'+fmt(r.buys.usd)+' · '+fmt(r.buys.rub)+' ₽'+(r.buys.avg?' ('+String(r.buys.avg).replace('.',',')+')':''));
+    L.push(t('moSells')+': $'+fmt(r.sells.usd)+' · '+fmt(r.sells.rub)+' ₽'+(r.sells.avg?' ('+String(r.sells.avg).replace('.',',')+')':''));
+    L.push(t('moStart')+': $'+fmt(r.opening.usd)+' · '+t('moEnd')+': $'+fmt(r.closing.usd)+' ('+String(r.closing.avg).replace('.',',')+')');
+    if(r.place==='Москва') L.push(t('moCash')+': '+fmt(r.closing.cash)+' ₽');
+    return L.join('\n');
+  }
+  function moCopy(){
+    var txt=moText_(); if(!txt) return;
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){toast(t('copied'));},function(){toast(t('copyFail'),true);}); }
+    else toast(t('copyFail'),true);
+  }
+
+  function thLoad(){
+    var box=document.getElementById('thBox'); box.innerHTML='<div class="loading">…</div>';
+    var place=document.getElementById('thPlace').value, pv=document.getElementById('thPeriod').value||'d10';
+    var period=(pv.charAt(0)==='m')?{month:pv.slice(1)}:{days:parseInt(pv.slice(1),10)||10};
+    apiCall('getBalanceHistory',{place:place,period:period},AUTH_TOKEN).then(function(r){
+      if(!r||!r.ok){ box.innerHTML='<div class="empty">'+((r&&r.error)||t('err'))+'</div>'; return; }
+      thRender(r);
+    }).catch(function(){ box.innerHTML='<div class="empty">'+t('connLost')+'</div>'; });
+  }
+  function thRender(r){
+    var isM=(r.place==='Москва');
+    var wd=t('wd').split(',');
+    var h='<div class="card" style="margin-top:0;padding:4px 14px;">';
+    h+='<div style="display:flex;gap:6px;padding:7px 0 8px;color:var(--muted);font-size:10px;border-bottom:1px solid var(--line);">'+
+      '<span style="flex:1;">'+t('thDay')+'</span><span style="width:86px;text-align:right;">'+t('thBal')+'</span>'+
+      '<span style="width:48px;text-align:right;">'+t('thAvg')+'</span><span style="width:76px;text-align:right;">'+t('thDelta')+'</span></div>';
+    if(!r.items.length) h+='<div class="empty">'+t('noOps2')+'</div>';
+    r.items.forEach(function(it){
+      var dt=new Date(it.d+'T12:00:00+03:00');
+      var dayTxt=it.d.slice(8,10)+'.'+it.d.slice(5,7)+' · '+wd[dt.getDay()];
+      var dTxt=it.dUsd===0?'<span style="color:var(--muted);">—</span>'
+        :('<span style="color:'+(it.dUsd>0?'var(--plus)':'var(--minus)')+';">'+(it.dUsd>0?'+':'−')+fmt(Math.abs(it.dUsd))+'</span>');
+      h+='<div style="display:flex;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;">'+
+        '<span style="flex:1;">'+dayTxt+'</span>'+
+        '<span style="width:86px;text-align:right;font-weight:600;">$'+fmt(it.usd)+'</span>'+
+        '<span style="width:48px;text-align:right;color:var(--muted);">'+String(it.avg).replace('.',',')+'</span>'+
+        '<span style="width:76px;text-align:right;">'+dTxt+'</span></div>';
+      if(isM){
+        var cTxt=it.dCash===0?'':' · '+t('thDelta').toLowerCase()+' '+(it.dCash>0?'+':'−')+fmt(Math.abs(it.dCash))+' ₽';
+        h+='<div style="font-size:11px;color:var(--muted);padding:0 0 8px;border-bottom:1px solid var(--line);margin-top:-6px;">'+t('thCash')+': '+fmt(it.cash)+' ₽'+cTxt+'</div>';
+      }
+    });
+    h+='</div>';
+    document.getElementById('thBox').innerHTML=h;
+  }
+
   /* ===== старт ===== */
   if(USER_ROLE!=='admin'){
     ['mOpDateField','uOpDateField','gOpDateField'].forEach(function(i){var e=document.getElementById(i); if(e)e.style.display='none';});
   }
-  apiCall('getClients',{},AUTH_TOKEN).then(function(list){ DB=list||[]; });
+  if(USER_ROLE==='report'){
+    var _rd=document.getElementById('rtab-daily'); if(_rd)_rd.style.display='none';
+    var _mk=document.getElementById('mkAllBtn'); if(_mk)_mk.style.display='none';
+  }
+  var _dbLast=0;
+  function refreshDB(force){
+    var now=Date.now();
+    if(!force && now-_dbLast<30000) return;   // не чаще раза в 30с
+    _dbLast=now;
+    apiCall('getClients',{},AUTH_TOKEN).then(function(list){ if(list&&list.length) DB=list; });
+  }
+  refreshDB(true);
   applyI18n();
   buildTabs();
 </script>
