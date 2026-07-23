@@ -284,7 +284,7 @@
   <!-- ====== УЗБЕКИСТАН ====== -->
   <div class="screen hidden" id="scr-uzb">
     <div class="head">
-      <div><h1 data-i18n="hUzb">Узбекистан</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameU">…</span></div></div>
+      <div><h1 data-i18n="hUzb">Узбекистан</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameU">…</span> · <span onclick="logout()" style="color:var(--minus);cursor:pointer;" data-i18n="exit">Чиқиш</span></div></div>
       <div class="balance"><div class="lbl" data-i18n="balance">Қолдиқ</div><div class="rub" id="uBalUsd">…</div><div class="usd" id="uBalAvg"></div><div class="profit" id="uBalProfit"></div></div>
     </div>
     <div class="counter">
@@ -320,7 +320,7 @@
   <!-- ====== РЕГИОНЫ ====== -->
   <div class="screen hidden" id="scr-region">
     <div class="head">
-      <div><h1 data-i18n="hRegion">Ҳудудлар</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameG">…</span></div></div>
+      <div><h1 data-i18n="hRegion">Ҳудудлар</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameG">…</span> · <span onclick="logout()" style="color:var(--minus);cursor:pointer;" data-i18n="exit">Чиқиш</span></div></div>
       <div class="balance"><div class="lbl" data-i18n="balance">Қолдиқ</div><div class="rub" id="gBalUsd">…</div><div class="usd" id="gBalAvg"></div><div class="profit" id="gBalProfit"></div></div>
     </div>
     <div class="counter" style="display:none;">
@@ -358,7 +358,7 @@
 
   <!-- ====== СДЕЛКИ (оператор 3) ====== -->
   <div class="screen hidden" id="scr-req">
-    <div class="head"><div><h1 data-i18n="hReq">Сделки</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameR">…</span></div></div></div>
+    <div class="head"><div><h1 data-i18n="hReq">Сделки</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameR">…</span> · <span onclick="logout()" style="color:var(--minus);cursor:pointer;" data-i18n="exit">Чиқиш</span></div></div></div>
     <div class="counter">
       <div class="cbox"><div class="lbl" data-i18n="onHand">Қўлда</div><div class="val" id="rOnHand">…</div><div class="sub" data-i18n="usdLeft">$ қолдиқ</div></div>
       <div class="cbox pending"><div class="lbl" data-i18n="inDeals">Сделкаларда</div><div class="val" id="rPending">…</div><div class="sub" id="rPendCnt"></div></div>
@@ -474,7 +474,7 @@
   </div>
 
   <div class="screen hidden" id="scr-reports">
-    <div class="head"><div><h1 data-i18n="hReports">Ҳисоботлар</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameRep">…</span></div></div></div>
+    <div class="head"><div><h1 data-i18n="hReports">Ҳисоботлар</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameRep">…</span> · <span onclick="logout()" style="color:var(--minus);cursor:pointer;" data-i18n="exit">Чиқиш</span></div></div></div>
     <div class="sub-tabs" id="repSubTabs" style="overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;">
       <div class="sub-tab sel" id="rtab-balance" onclick="repTab('balance')" data-i18n="rptBalance">Мижозлар баланси</div>
       <div class="sub-tab" id="rtab-daily" onclick="repTab('daily')" data-i18n="rptDaily">Кунлик</div>
@@ -635,6 +635,7 @@
     active:'Активные', doneList:'Выполненные', noActive:'Активных сделок нет', regionDeals:'Сделки этого региона',
     execAll:'Все выполнены', execAllQ:'Отметить все сделки «{r}» выполненными?', pickRegion:'Выберите регион',
     newRegionQ:'Название нового региона:', regionCreated:'Регион создан', newShort:'Новый',
+    curQ:'Валюта региона — введите номер:', curBad:'Валюта не выбрана',
     createRegionHint:'Создайте регион кнопкой +',
     take:'Принять', give:'Выдать', client:'Клиент:', toWhom:'Кому:', tel:'Тел:', memo:'Прим:',
     transFrom:'С кого снять долг (станет кредитор +)', transTo:'На кого повесить (станет должник −)',
@@ -656,7 +657,7 @@
     rptMonthly:'Месячный', rptHistory:'История', lblMonth:'Месяц', lblPlace:'Место', lblPeriod2:'Период',
     daysW:'дней', moProfit:'Прибыль', moBuys:'Закупки', moSells:'Продажи', moTotal:'Итого', moOps:'операций',
     moTurnover:'оборот', moStart:'Начало', moEnd:'Конец', moCash:'Касса ₽', noOps2:'Операций нет', exchange:'Обмен',
-    thDay:'День', thBal:'Остаток $', thAvg:'Ср.', thDelta:'За день', thCash:'Касса ₽',
+    thDay:'День', thBal:'Остаток', thAvg:'Ср.', thDelta:'За день', thCash:'Касса ₽',
     wd:'вс,пн,вт,ср,чт,пт,сб', monthNames:'январь,февраль,март,апрель,май,июнь,июль,август,сентябрь,октябрь,ноябрь,декабрь',
     dlNoneT:'Сегодня сделок нет', dlNoneY:'Вчера сделок не было', dlActive:'Активные', dlSentSec:'Отправлено', dlDeals:'сделок', dlSentMark:'отправлено', prepare:'Подготовить',
     startWord:'Начальный', transferWord:'Перевод', balAfter:'остаток',
@@ -720,6 +721,7 @@
     active:'Фаол', doneList:'Бажарилган', noActive:'Фаол сделка йўқ', regionDeals:'Бу ҳудуд сделкалари',
     execAll:'Барчасини бажарилди', execAllQ:'«{r}» бўйича барча сделкаларни бажарилди деб белгилайми?', pickRegion:'Ҳудуд танланг',
     newRegionQ:'Янги ҳудуд номи:', regionCreated:'Ҳудуд яратилди', newShort:'Янги',
+    curQ:'Ҳудуд валютаси — рақамни киритинг:', curBad:'Валюта танланмади',
     createRegionHint:'+ тугмаси билан ҳудуд яратинг',
     take:'Олинг', give:'Беринг', client:'Клиент:', toWhom:'Кимга:', tel:'Тел:', memo:'Изоҳ:',
     transFrom:'Кимдан қарз олинади (Хакдор + бўлади)', transTo:'Кимга юкланади (Карздор − бўлади)',
@@ -741,7 +743,7 @@
     rptMonthly:'Ойлик', rptHistory:'Тарих', lblMonth:'Ой', lblPlace:'Жой', lblPeriod2:'Давр',
     daysW:'кун', moProfit:'Фойда', moBuys:'Харид', moSells:'Сотув', moTotal:'Жами', moOps:'та операция',
     moTurnover:'айланма', moStart:'Бошида', moEnd:'Охирида', moCash:'Касса ₽', noOps2:'Операция йўқ', exchange:'Обмен',
-    thDay:'Кун', thBal:'Қолдиқ $', thAvg:'Ўрт.', thDelta:'Кун ичида', thCash:'Касса ₽',
+    thDay:'Кун', thBal:'Қолдиқ', thAvg:'Ўрт.', thDelta:'Кун ичида', thCash:'Касса ₽',
     wd:'як,ду,се,чо,па,жу,ша', monthNames:'январь,февраль,март,апрель,май,июнь,июль,август,сентябрь,октябрь,ноябрь,декабрь',
     dlNoneT:'Бугун сделка йўқ', dlNoneY:'Кеча сделка бўлмаган', dlActive:'Фаол', dlSentSec:'Юборилди', dlDeals:'та сделка', dlSentMark:'юборилди', prepare:'Тайёрлаш',
     startWord:'Бошланғич', transferWord:'Перевод', balAfter:'қолдиқ',
@@ -1062,10 +1064,11 @@
       var cls,amt;
       if(it.action==='Обмен'){cls='gold'; amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+' / '+(it.rub<0?'−'+fmt(-it.rub):'+'+fmt(it.rub))+' ₽<span class="sub">'+t('rate')+' '+(String(it.rate).replace('.',',')||'')+'</span>';}
       else{var v=it.rub!==0?it.rub:it.usd; var cur=it.rub!==0?' ₽':' $'; cls=v<0?'minus':'plus'; amt=(v<0?'−':'+')+fmt(Math.abs(v))+cur;}
-      h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div></div>'+
+      var noteLn=it.note?'<div class="mt" style="opacity:.85;">'+esc(it.note)+'</div>':'';
+      h+='<div class="op-item"'+feedClick(it.name,'moscow')+'><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div>'+noteLn+'</div>'+
          '<div style="display:flex; align-items:center; gap:8px;">'+
          '<div class="op-amt '+cls+'">'+amt+'</div>'+
-         '<div onclick="mShareDeal('+idx+')" style="flex:0 0 auto; width:30px; height:30px; border-radius:8px; background:rgba(37,211,102,.12); display:flex; align-items:center; justify-content:center; color:#25d366; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>'+
+         '<div onclick="event.stopPropagation();mShareDeal('+idx+')" style="flex:0 0 auto; width:30px; height:30px; border-radius:8px; background:rgba(37,211,102,.12); display:flex; align-items:center; justify-content:center; color:#25d366; cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></div>'+
          '</div></div>';
     });
     box.innerHTML=h;
@@ -1167,12 +1170,12 @@
       var html='';
       if(st.action==='oldim'){
         html+=row(t('rubItogPlus'),'+'+fmt(rub)+' ₽','plus');
-        html+=row(t('kassa'),'+$'+fmt(usd),'plus');
+        html+=row(t('kassa'),'+'+cur(getRegionName())+fmt(usd),'plus');
         html+=row(t('profit'),t('buyNoProfit'),'');
       } else {
         var cost=Math.round(usd*st.avg); var profit=rub-cost;
         html+=row(t('rubItogMinus'),'−'+fmt(rub)+' ₽','minus');
-        html+=row(t('kassa'),'−$'+fmt(usd),'minus');
+        html+=row(t('kassa'),'−'+cur(getRegionName())+fmt(usd),'minus');
         html+=row(t('cost'),fmt(cost)+' ₽','');
         html+=row(t('profit'),(profit>=0?'+':'')+fmt(profit)+' ₽',profit>=0?'gold':'minus');
       }
@@ -1207,7 +1210,7 @@
       var btn=id('Submit'); btn.disabled=true; btn.textContent=t('creating');
       apiCall('saveRegionRequest',{payload:p},AUTH_TOKEN).then(function(res){
         btn.disabled=false; btn.textContent=t('createDeal');
-        if(res.ok){ if(!res.dup) showOk(t('dealCreated'),esc(p.name)+' · $'+fmt(p.usd)+' · '+fmt(p.rub)+' ₽'); reset(); afterSave(); }
+        if(res.ok){ if(!res.dup) showOk(t('dealCreated'),esc(p.name)+' · '+cur(p.region)+fmt(p.usd)+' · '+fmt(p.rub)+' ₽'); reset(); afterSave(); }
         else toast(res.error||t('err'),true);
       }).catch(function(){btn.disabled=false; btn.textContent=t('createDeal'); toast(t('connLost'),true);});
     }
@@ -1284,8 +1287,9 @@
         var rateTxt=it.rate?(' · '+t('rate')+' '+String(it.rate).replace('.',',')):'';
         var stTxt=(pfx==='g')?'':((it.status==='заявка'?t('deal'):t('done')));
         var sub=(stTxt+rateTxt+rubTxt).replace(/^ · /,'');
-        var amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+'<span class="sub">'+sub+'</span>';
-        h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+amt+'</div></div>';
+        var _c=cur(getRegionName());
+        var amt=(it.usd<0?'−'+_c+fmt(-it.usd):'+'+_c+fmt(it.usd))+'<span class="sub">'+sub+'</span>';
+        h+='<div class="op-item"'+feedClick(it.name,(pfx==='u'?'uzb':'region'))+'><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.action)+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+amt+'</div></div>';
       });
       box.innerHTML=h;
     }
@@ -1435,10 +1439,14 @@
     gCurRegion=r; gRenderRegionTabs();
     gOpen();
   }
+  var CUR_LIST=[['usd','$ доллар'],['kzt','₸ тенге'],['uzs','сўм'],['tjs','смн сомони'],['cny','¥ юань'],['aed','dh дирхам'],['try','₺ лира']];
   function gAddRegion(){
     var n=prompt(t('newRegionQ')); if(!n) return;
-    apiCall('addRegion',{name:n.trim()},AUTH_TOKEN).then(function(res){
-      if(res.ok){ showOk(t('regionCreated'),esc(res.name)); gInitRegions(); }
+    var menu=CUR_LIST.map(function(c,i){return (i+1)+' — '+c[1];}).join('\n');
+    var pick=prompt(t('curQ')+'\n'+menu,'1'); if(pick===null) return;
+    var ci=parseInt(pick,10); if(!(ci>=1&&ci<=CUR_LIST.length)){ toast(t('curBad'),true); return; }
+    apiCall('addRegion',{name:n.trim(),cur:CUR_LIST[ci-1][0]},AUTH_TOKEN).then(function(res){
+      if(res.ok){ showOk(t('regionCreated'),esc(res.name)); curLoad(); gInitRegions(); }
       else toast(res.error||t('err'),true);
     });
   }
@@ -1473,11 +1481,11 @@
   }
 
   function waShareLink(d){
-    var txt='Сделка: '+d.a+' $'+fmt(d.usd)+'\nКимдан: '+d.name+(d.to?'\nКимга: '+d.to:'')+(d.phone?'\nТел: '+d.phone:'')+(d.memo?'\nИзоҳ: '+d.memo:'');
+    var txt='Сделка: '+d.a+' '+cur(d.region)+fmt(d.usd)+'\nКимдан: '+d.name+(d.to?'\nКимга: '+d.to:'')+(d.phone?'\nТел: '+d.phone:'')+(d.memo?'\nИзоҳ: '+d.memo:'');
     return 'whatsapp://send?text='+encodeURIComponent(txt);
   }
   function shareReq(d){
-    var txt='Сделка: '+d.a+' $'+fmt(d.usd)+'\nКимдан: '+d.name+(d.to?'\nКимга: '+d.to:'')+(d.phone?'\nТел: '+d.phone:'')+(d.memo?'\nИзоҳ: '+d.memo:'');
+    var txt='Сделка: '+d.a+' '+cur(d.region)+fmt(d.usd)+'\nКимдан: '+d.name+(d.to?'\nКимга: '+d.to:'')+(d.phone?'\nТел: '+d.phone:'')+(d.memo?'\nИзоҳ: '+d.memo:'');
     if(navigator.share){ navigator.share({text:txt}).catch(function(){}); }
     else { window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank'); }
   }
@@ -1550,7 +1558,7 @@
     res.items.forEach(function(it){
       var cls=it.sum>0?'plus':(it.sum<0?'minus':'');
       var sign=it.sum>0?'+':(it.sum<0?'−':'');
-      h+='<div class="op-item"><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.note||'')+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.sum))+' ₽</div></div>';
+      h+='<div class="op-item"'+feedClick(it.name,'transfer')+'><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(it.note||'')+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.sum))+' ₽</div></div>';
     });
     box.innerHTML=h;
   }
@@ -1628,7 +1636,7 @@
       var fieldBtn=(it.action!=='Обмен'&&it.status!=='итог')?'<button class="cbtn" title="'+t('editTitle')+'" onclick=\'aFieldEdit('+JSON.stringify({id:it.id,name:it.name,note:it.note}).replace(/'/g,"&#39;")+')\'>✎</button>':'';
       var editBtn=canEdit?'<button class="cbtn" title="'+t('fixBtn')+'" onclick=\'aEdit('+JSON.stringify(it).replace(/'/g,"&#39;")+')\'>↻</button>':'';
       var dateBtn='<button class="cbtn" title="📅" onclick="aChangeDate(\''+esc(it.id)+'\')">📅</button>';
-      h+='<div class="cancel-item"><div class="info"><div class="t">'+esc(it.action)+' · '+esc(it.name||'—')+' · '+(it.usd?'$'+fmt(it.usd):'')+(it.rub?' '+fmt(it.rub)+'₽':'')+rateTxt+'</div><div class="m">'+it.time+' · '+esc(it.region||'')+' · '+esc(it.operator)+' · '+esc(it.status)+'</div></div><div class="acts">'+dateBtn+fieldBtn+editBtn+'<button class="cbtn red" data-id="'+esc(it.id)+'" onclick="aCancel(this)">✕</button></div></div>';
+      h+='<div class="cancel-item"><div class="info"><div class="t">'+esc(it.action)+' · '+esc(it.name||'—')+' · '+(it.usd?cur(it.region)+fmt(it.usd):'')+(it.rub?' '+fmt(it.rub)+'₽':'')+rateTxt+'</div><div class="m">'+it.time+' · '+esc(it.region||'')+' · '+esc(it.operator)+' · '+esc(it.status)+'</div></div><div class="acts">'+dateBtn+fieldBtn+editBtn+'<button class="cbtn red" data-id="'+esc(it.id)+'" onclick="aCancel(this)">✕</button></div></div>';
     });
     box.innerHTML=h;
   }
@@ -1813,7 +1821,7 @@
     h+='<div class="card"><h2 style="font-size:13px;color:var(--muted);margin:0 0 10px 2px;text-transform:uppercase;letter-spacing:.5px;">'+t('ovAssets')+'</h2>';
     h+=line('Касса Москва', d.moscow.total, '$'+fmt(d.moscow.usd)+' · '+t('avgRate')+' '+rate2(d.moscow.avg)+' · '+t('ovCash')+' '+fmt(d.moscow.rubCash)+' ₽','plus');
     d.regions.forEach(function(r){
-      h+=line(t('ovBal')+' '+r.name, r.rub, '$'+fmt(r.usd)+' · '+t('avgRate')+' '+rate2(r.avg),'plus');
+      h+=line(t('ovBal')+' '+r.name, r.rub, cur(r.name)+fmt(r.usd)+' · '+t('avgRate')+' '+rate2(r.avg),'plus');
     });
     h+=line(t('ovKarz'), d.karzdor, t('ovKarzSub'), 'plus');
     h+='<div class="op-item" style="border-top:2px solid var(--line);margin-top:4px;"><div class="op-left"><div class="nm" style="font-weight:800;">'+t('ovTotalA')+'</div></div><div class="op-amt" style="font-weight:800;">'+fmt(d.activeTotal)+' ₽</div></div>';
@@ -2057,7 +2065,7 @@
       var sign=it.balance>0?'+':(it.balance<0?'−':'');
       var dot=it.today?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle;"></span>':'';
       var clickable=!it.pseudo;
-      var clickAttr=clickable?(' style="cursor:pointer;" onclick="openClient(\''+esc(it.name).replace(/'/g,"\\'")+'\')"'):' style="opacity:.55;"';
+      var clickAttr=clickable?(' style="cursor:pointer;" onclick="openClient(\''+esc(it.name).replace(/'/g,"\\'")+'\',\'reports\')"'):' style="opacity:.55;"';
       h+='<div class="op-item"'+clickAttr+'><div class="op-left"><div class="nm">'+dot+esc(it.name)+'</div><div class="mt">'+(it.last||'—')+' · '+it.count+' '+t('deal')+(it.pseudo?' · '+esc(it.sub||''):'')+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.balance))+' ₽</div></div>';
     });
     box.innerHTML=h;
@@ -2066,7 +2074,15 @@
   /* ===== ЭКРАН КЛИЕНТА (история по тапу из баланса) ===== */
   var clCurName='', clCurPhone='', clPeriodVal='all', clReportText='', clReportPhone='';
 
-  function openClient(name){
+  var CL_BACK='reports';   // экран, откуда зашли на клиента
+  function feedClick(name, from){
+    name=String(name||'').trim();
+    if(!name || name==='Обмен' || name==='Остаток') return '';
+    if(['operator2','admin','report'].indexOf(USER_ROLE)===-1) return '';
+    return ' style="cursor:pointer;" onclick="openClient(\''+name.replace(/'/g,"\\'")+'\',\''+from+'\')"';
+  }
+  function openClient(name, from){
+    CL_BACK=from||'reports';
     clCurName=name; clPeriodVal='all'; clReportText=''; clReportPhone='';
     document.getElementById('clName').textContent=name;
     var _clP=''; for(var _pi=0;_pi<DB.length;_pi++){ if(DB[_pi].name===name){ _clP=String(DB[_pi].phone||'').replace(/\D/g,''); break; } }
@@ -2084,6 +2100,7 @@
   }
   function clientBack(){
     document.getElementById('scr-client').classList.add('hidden');
+    if(CL_BACK && CL_BACK!=='reports'){ showScreen(CL_BACK); return; }
     document.getElementById('scr-reports').classList.remove('hidden');
     repTab('balance');
   }
@@ -2421,7 +2438,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 8;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
+  var APP_VERSION = 9;   // ← поднимать ВМЕСТЕ с version.json при каждом релизе
   (function(){
     // номер версии внизу экрана (для сверки глазами); bottom:74px — чтобы не прятался под кнопкой ⟳
     var v=document.createElement('div');
@@ -2516,17 +2533,17 @@
     var h='<div class="card" style="margin-top:0;">'+
       '<div style="font-size:12px;color:var(--muted);">'+t('moProfit')+' · '+moName_(r.month)+' · '+esc(r.place)+'</div>'+
       '<div style="font-size:26px;font-weight:700;color:'+pc+';margin-top:2px;">'+(r.profit>0?'+':'')+fmt(r.profit)+' ₽</div>'+
-      '<div style="font-size:11px;color:var(--muted);margin-top:4px;">'+r.opsCount+' '+t('moOps')+' · '+t('moTurnover')+' $'+fmt(r.turnoverUsd)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:4px;">'+r.opsCount+' '+t('moOps')+' · '+t('moTurnover')+' '+cur(r.place)+fmt(r.turnoverUsd)+'</div>'+
       '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px;border-top:1px solid var(--line);padding-top:8px;">'+
-        '<span>'+t('moStart')+': $'+fmt(r.opening.usd)+' · '+String(r.opening.avg).replace('.',',')+'</span>'+
-        '<span>'+t('moEnd')+': $'+fmt(r.closing.usd)+' · '+String(r.closing.avg).replace('.',',')+'</span></div>'+
+        '<span>'+t('moStart')+': '+cur(r.place)+fmt(r.opening.usd)+' · '+String(r.opening.avg).replace('.',',')+'</span>'+
+        '<span>'+t('moEnd')+': '+cur(r.place)+fmt(r.closing.usd)+' · '+String(r.closing.avg).replace('.',',')+'</span></div>'+
       (isM?'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;">'+
         '<span>'+t('moCash')+': '+fmt(r.opening.cash)+' ₽</span><span>'+fmt(r.closing.cash)+' ₽</span></div>':'')+
       '</div>';
     var seg=function(id,lbl,d){
       var sel=(moSide===id);
       return '<div class="seg-btn'+(sel?(id==='buys'?' green sel':' sel'):'')+'" style="flex:1;" onclick="moSideSet(\''+id+'\')">'+lbl+
-        '<div style="font-size:10px;font-weight:400;opacity:.8;">$'+fmt(d.usd)+'</div></div>';
+        '<div style="font-size:10px;font-weight:400;opacity:.8;">'+cur(MO_DATA.place)+fmt(d.usd)+'</div></div>';
     };
     h+='<div class="seg-row" style="display:flex;gap:6px;margin:12px 0 10px;">'+seg('buys',t('moBuys'),r.buys)+seg('sells',t('moSells'),r.sells)+'</div>';
     var d=(moSide==='buys')?r.buys:r.sells;
@@ -2537,10 +2554,10 @@
         var who=(it.action==='Обмен')?t('exchange'):(esc(it.action)+(it.name?' · '+esc(it.name):''));
         h+='<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;">'+
           '<span style="color:var(--muted);">'+it.d+' · '+who+'</span>'+
-          '<span style="white-space:nowrap;">$'+fmt(it.usd)+moRateTxt_(it.rate)+'</span></div>';
+          '<span style="white-space:nowrap;">'+cur(r.place)+fmt(it.usd)+moRateTxt_(it.rate)+'</span></div>';
       });
       h+='<div style="display:flex;justify-content:space-between;padding:9px 0;font-weight:600;font-size:13px;">'+
-        '<span>'+t('moTotal')+' · '+d.count+'</span><span>$'+fmt(d.usd)+' · '+fmt(d.rub)+' ₽</span></div>';
+        '<span>'+t('moTotal')+' · '+d.count+'</span><span>'+cur(r.place)+fmt(d.usd)+' · '+fmt(d.rub)+' ₽</span></div>';
     }
     h+='</div>';
     h+='<button class="btn-share" style="width:100%;margin-top:10px;" onclick="moCopy()">'+t('copy')+'</button>';
@@ -2551,9 +2568,9 @@
     var L=[];
     L.push('📊 '+esc(r.place)+' · '+moName_(r.month));
     L.push(t('moProfit')+': '+(r.profit>0?'+':'')+fmt(r.profit)+' ₽');
-    L.push(t('moBuys')+': $'+fmt(r.buys.usd)+' · '+fmt(r.buys.rub)+' ₽'+(r.buys.avg?' ('+String(r.buys.avg).replace('.',',')+')':''));
-    L.push(t('moSells')+': $'+fmt(r.sells.usd)+' · '+fmt(r.sells.rub)+' ₽'+(r.sells.avg?' ('+String(r.sells.avg).replace('.',',')+')':''));
-    L.push(t('moStart')+': $'+fmt(r.opening.usd)+' · '+t('moEnd')+': $'+fmt(r.closing.usd)+' ('+String(r.closing.avg).replace('.',',')+')');
+    L.push(t('moBuys')+': '+cur(r.place)+fmt(r.buys.usd)+' · '+fmt(r.buys.rub)+' ₽'+(r.buys.avg?' ('+String(r.buys.avg).replace('.',',')+')':''));
+    L.push(t('moSells')+': '+cur(r.place)+fmt(r.sells.usd)+' · '+fmt(r.sells.rub)+' ₽'+(r.sells.avg?' ('+String(r.sells.avg).replace('.',',')+')':''));
+    L.push(t('moStart')+': '+cur(r.place)+fmt(r.opening.usd)+' · '+t('moEnd')+': '+cur(r.place)+fmt(r.closing.usd)+' ('+String(r.closing.avg).replace('.',',')+')');
     if(r.place==='Москва') L.push(t('moCash')+': '+fmt(r.closing.cash)+' ₽');
     return L.join('\n');
   }
@@ -2577,7 +2594,7 @@
     var wd=t('wd').split(',');
     var h='<div class="card" style="margin-top:0;padding:4px 14px;">';
     h+='<div style="display:flex;gap:6px;padding:7px 0 8px;color:var(--muted);font-size:10px;border-bottom:1px solid var(--line);">'+
-      '<span style="flex:1;">'+t('thDay')+'</span><span style="width:86px;text-align:right;">'+t('thBal')+'</span>'+
+      '<span style="flex:1;">'+t('thDay')+'</span><span style="width:86px;text-align:right;">'+t('thBal')+' '+cur(r.place)+'</span>'+
       '<span style="width:48px;text-align:right;">'+t('thAvg')+'</span><span style="width:76px;text-align:right;">'+t('thDelta')+'</span></div>';
     if(!r.items.length) h+='<div class="empty">'+t('noOps2')+'</div>';
     r.items.forEach(function(it){
@@ -2587,7 +2604,7 @@
         :('<span style="color:'+(it.dUsd>0?'var(--plus)':'var(--minus)')+';">'+(it.dUsd>0?'+':'−')+fmt(Math.abs(it.dUsd))+'</span>');
       h+='<div style="display:flex;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;">'+
         '<span style="flex:1;">'+dayTxt+'</span>'+
-        '<span style="width:86px;text-align:right;font-weight:600;">$'+fmt(it.usd)+'</span>'+
+        '<span style="width:86px;text-align:right;font-weight:600;">'+cur(r.place)+fmt(it.usd)+'</span>'+
         '<span style="width:48px;text-align:right;color:var(--muted);">'+String(it.avg).replace('.',',')+'</span>'+
         '<span style="width:76px;text-align:right;">'+dTxt+'</span></div>';
       if(isM){
@@ -2607,6 +2624,10 @@
     var _rd=document.getElementById('rtab-daily'); if(_rd)_rd.style.display='none';
     var _mk=document.getElementById('mkAllBtn'); if(_mk)_mk.style.display='none';
   }
+  /* валюта региона: карта регион->значок с бэка, по умолчанию $ */
+  var CUR={};
+  function cur(region){ return CUR[String(region||'').trim()] || '$'; }
+  function curLoad(){ apiCall('getCurrencyMap',{},AUTH_TOKEN).then(function(m){ if(m&&typeof m==='object') CUR=m; }).catch(function(){}); }
   var _dbLast=0;
   function refreshDB(force){
     var now=Date.now();
@@ -2615,6 +2636,7 @@
     apiCall('getClients',{},AUTH_TOKEN).then(function(list){ if(list&&list.length) DB=list; });
   }
   refreshDB(true);
+  curLoad();
   applyI18n();
   buildTabs();
 </script>
