@@ -1108,13 +1108,13 @@
   var mFeedItems=[];   // сделки текущей ленты Москвы в памяти (для «поделиться»)
   function mRenderFeed(items){
     mFeedItems=items||[];
+    markToday(items);
     var box=document.getElementById('mFeed');
     if(!items||!items.length){box.innerHTML='<div class="loading">'+t('noOps')+'</div>'; return;}
     var h=''; items.forEach(function(it,idx){
       var cls,amt;
       if(it.action==='Обмен'){cls='gold'; amt=(it.usd<0?'−$'+fmt(-it.usd):'+$'+fmt(it.usd))+' / '+(it.rub<0?'−'+fmt(-it.rub):'+'+fmt(it.rub))+' ₽<span class="sub">'+t('rate')+' '+(String(it.rate).replace('.',',')||'')+'</span>';}
       else{var v=it.rub!==0?it.rub:it.usd; var cur=it.rub!==0?' ₽':' $'; cls=v<0?'minus':'plus'; amt=(v<0?'−':'+')+fmt(Math.abs(v))+cur;}
-      markToday(feed);
       var noteLn=it.note?'<div class="mt" style="opacity:.85;">'+esc(it.note)+'</div>':'';
       h+='<div class="op-item"'+feedClick(it.name,'moscow')+'><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(actName(it.action))+' · '+esc(it.operator)+'</div>'+noteLn+'</div>'+
          '<div style="display:flex; align-items:center; gap:8px;">'+
@@ -1338,6 +1338,7 @@
       });
     }
     function renderFeed(items){
+      markToday(items);
       var box=id('Feed');
       if(!items||!items.length){box.innerHTML='<div class="loading">'+t('noDeals')+'</div>'; return;}
       var h=''; items.forEach(function(it){
@@ -1346,7 +1347,6 @@
         var rateTxt=it.rate?(' · '+t('rate')+' '+String(it.rate).replace('.',',')):'';
         var stTxt=(pfx==='g')?'':((it.status==='заявка'?t('deal'):t('done')));
         var sub=(stTxt+rateTxt+rubTxt).replace(/^ · /,'');
-        markToday(list);
         var _c=cur(getRegionName());
         var amt=(it.usd<0?'−'+_c+fmt(-it.usd):'+'+_c+fmt(it.usd))+'<span class="sub">'+sub+'</span>';
         h+='<div class="op-item"'+feedClick(it.name,(pfx==='u'?'uzb':'region'))+'><div class="op-left"><div class="nm">'+esc(it.name)+'</div><div class="mt">'+it.datetime+' · '+esc(actName(it.action))+' · '+esc(it.operator)+'</div></div><div class="op-amt '+cls+'">'+amt+'</div></div>';
