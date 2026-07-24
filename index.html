@@ -329,10 +329,12 @@
       <div class="cbox"><div class="lbl" data-i18n="onHand">Қўлда</div><div class="val" id="gOnHand">…</div><div class="sub" data-i18n="usdLeft">$ қолдиқ</div></div>
       <div class="cbox pending"><div class="lbl" data-i18n="inDeals">Сделкаларда</div><div class="val" id="gPending">…</div><div class="sub" id="gPendCnt"></div></div>
     </div>
-    <div class="card" id="gFormCard">
-      <div class="field"><label data-i18n="lblRegion">Ҳудуд (регион)</label>
+    <div class="card" id="gRegionCard">
+      <div class="field" style="margin-bottom:0;"><label data-i18n="lblRegion">Ҳудуд (регион)</label>
         <div class="reg-tabs" id="gRegionTabs"></div>
       </div>
+    </div>
+    <div class="card" id="gFormCard">
       <div class="actions two" style="margin-bottom:14px;">
         <div class="act-btn oldim" onclick="gPick(this,'oldim')">Олдим <small id="gOldimSub" data-i18n="oldimSubR">сотиб олдим $</small></div>
         <div class="act-btn berdim" onclick="gPick(this,'berdim')">Бердим <small id="gBerdimSub" data-i18n="berdimSubR">сотдим $</small></div>
@@ -2142,8 +2144,9 @@
       var sign=it.balance>0?'+':(it.balance<0?'−':'');
       var dot=it.today?'<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle;"></span>':'';
       var clickable=!it.pseudo;
-      var clickAttr=clickable?(' style="cursor:pointer;" onclick="openClient(\''+esc(it.name).replace(/'/g,"\\'")+'\',\'reports\')"'):' style="opacity:.55;"';
-      h+='<div class="op-item"'+clickAttr+(it.today?' style="border:1.5px solid var(--accent);"':'')+'><div class="op-left"><div class="nm">'+dot+esc(it.name)+'</div><div class="mt">'+(it.last||'—')+' · '+it.count+' '+dealsW(it.count)+(it.pseudo?' · '+esc(it.sub||''):'')+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.balance))+' ₽</div></div>';
+      var stl=(clickable?'cursor:pointer;':'opacity:.55;')+(it.today?'border:1.5px solid var(--accent);border-radius:10px;padding-left:10px;padding-right:10px;':'');
+      var clickAttr=' style="'+stl+'"'+(clickable?(' onclick="openClient(\''+esc(it.name).replace(/'/g,"\\'")+'\',\'reports\')"'):'');
+      h+='<div class="op-item"'+clickAttr+'><div class="op-left"><div class="nm">'+dot+esc(it.name)+'</div><div class="mt">'+(it.last||'—')+' · '+it.count+' '+dealsW(it.count)+(it.pseudo?' · '+esc(it.sub||''):'')+'</div></div><div class="op-amt '+cls+'">'+sign+fmt(Math.abs(it.balance))+' ₽</div></div>';
     });
     box.innerHTML=h;
   }
