@@ -1833,12 +1833,48 @@
   var zCurMode='cash';
   function zHidden_(r){ return /транзит/i.test(String(r||'')); }
 
+  // Список регионов для транзита. Брать его из gRegList нельзя: он
+  // заполняется только когда открыт экран «Регионы». Не заходил туда —
+  // список пуст, и в транзите остаётся один Узбекистан. Поэтому идём
+  // по трём источникам: свежие регионы из базы, потом кэш списка,
+  // потом то, что успел набрать экран регионов.
+  function zRegions_(){
+    var out=[];
+    try{
+      if(typeof _sbReg!=='undefined' && _sbReg && _sbReg.length){
+        out=_sbReg.filter(function(r){ return !r.hidden && String(r.region||'').trim(); })
+                  .map(function(r){ return String(r.region).trim(); });
+      }
+    }catch(e){}
+    if(!out.length){ try{ out=(cGet('reglist')||[]).slice(); }catch(e2){} }
+    if(!out.length && typeof gRegList!=='undefined' && gRegList && gRegList.length) out=gRegList.slice();
+    var res=['Узбекистан'];
+    out.forEach(function(r){
+      r=String(r||'').trim();
+      if(r && r!=='Узбекистан' && r!=='Москва' && !zHidden_(r) && res.indexOf(r)===-1) res.push(r);
+    });
+    return res;
+  }
+
   function zOpen(){
     var e=document.getElementById('opNameT'); if(e) e.textContent=USER_NAME||'—';
     var sel=document.getElementById('zRegion');
-    if(sel && !sel.options.length){
-      var list=['Узбекистан'].concat((gRegList||[]).filter(function(r){return !zHidden_(r);}));
+    if(sel){
+      // перестраиваем каждый раз: регионы могли подгрузиться после первого
+      // захода, а выбранный сохраняем
+      var was=sel.value;
+      var list=zRegions_();
       sel.innerHTML=list.map(function(r){return '<option>'+esc(r)+'</option>';}).join('');
+      if(was && list.indexOf(was)!==-1) sel.value=was;
+      // регионов не видно вовсе — попросим экран регионов их подтянуть,
+      // и перестроим список, когда придут
+      if(list.length<2 && typeof gInitRegions==='function'){
+        try{ gInitRegions(); setTimeout(function(){
+          var l2=zRegions_(); if(l2.length>list.length){ var w=sel.value;
+            sel.innerHTML=l2.map(function(r){return '<option>'+esc(r)+'</option>';}).join('');
+            if(w && l2.indexOf(w)!==-1) sel.value=w; }
+        },1500); }catch(e3){}
+      }
     }
     zMode(zCurMode);
     zFeed();
@@ -5015,7 +5051,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 35.7;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
+  var APP_VERSION = 35.8;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
                           // телефон ждёт version.json БОЛЬШЕ своего номера,
                           // понижение навсегда убивает баннер обновления.
   (function(){
