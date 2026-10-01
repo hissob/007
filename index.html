@@ -429,6 +429,62 @@
     <div class="card" style="display:none;"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><div class="sec-title" style="margin:0;" data-i18n="regionDeals">Бу ҳудуд сделкалари</div><div id="gExecAllBtn" onclick="execAllRequests(gCurRegion)" style="display:none; padding:7px 12px; background:rgba(61,220,132,.15); border:1px solid var(--accent); border-radius:9px; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer;"><span data-i18n="execAll">Барчасини бажарилди</span></div></div><div id="gReqList"><div class="loading">…</div></div></div>
   </div>
 
+  <!-- ====== ТРАНЗИТ (сквозная сделка одной формой) ====== -->
+  <div class="screen hidden" id="scr-transit">
+    <div class="head">
+      <div><h1>Транзит</h1><div class="op">Оператор: <span id="opNameT">…</span></div></div>
+    </div>
+    <div class="card">
+      <div class="field"><label>Регион</label>
+        <select id="zRegion" onchange="zPreview()"></select>
+        <div class="fact-hint" id="zRegionHint">Узбекистан идёт через отдельный транзитный склад — свой остаток не трогается.</div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Продавец (у кого купили)</label>
+          <div class="ac-wrap"><input type="text" id="zSeller" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('zSeller','zSellerAc')" onfocus="acInput('zSeller','zSellerAc')"><div class="ac-list" id="zSellerAc"></div></div>
+        </div>
+        <div class="field"><label>Покупатель (кому продали)</label>
+          <div class="ac-wrap"><input type="text" id="zBuyer" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('zBuyer','zBuyerAc')" onfocus="acInput('zBuyer','zBuyerAc')"><div class="ac-list" id="zBuyerAc"></div></div>
+        </div>
+      </div>
+      <div class="field"><label>Сумма $</label><input type="text" id="zUsd" class="money" placeholder="0" inputmode="numeric" oninput="zCalc('U')"></div>
+      <div class="row2">
+        <div class="field"><label>Курс закупки</label><input type="text" id="zRateBuy" placeholder="0" inputmode="decimal" oninput="zCalc('RB')"></div>
+        <div class="field"><label>Рубль закупки</label><input type="text" id="zRubBuy" class="money" placeholder="0" inputmode="numeric" oninput="zCalc('BB')"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Курс продажи</label><input type="text" id="zRateSell" placeholder="0" inputmode="decimal" oninput="zCalc('RS')"></div>
+        <div class="field"><label>Рубль продажи</label><input type="text" id="zRubSell" class="money" placeholder="0" inputmode="numeric" oninput="zCalc('BS')"></div>
+      </div>
+      <div class="calc-box"><div id="zCalcBox" style="font-size:13px;color:var(--muted)">Заполни сумму и оба курса — покажу маржу и прибыль.</div></div>
+
+      <div class="field" style="margin-bottom:8px;"><label>Расчёт</label></div>
+      <div class="actions two" style="margin-bottom:10px;">
+        <div class="act-btn oldim" id="zmCash" onclick="zMode('cash')">Через кассу <small>выдал · получил</small></div>
+        <div class="act-btn berdim" id="zmBroker" onclick="zMode('broker')">Посредник <small>только маржа</small></div>
+      </div>
+      <div class="act-btn" id="zmNone" onclick="zMode('none')" style="margin-bottom:12px;">Не рассчитано <small>оба долга висят</small></div>
+
+      <div id="zCashBox" style="display:none;">
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 0;"><input type="checkbox" id="zPaidSeller" checked style="width:auto;"> выдал продавцу из кассы</label>
+        <label style="display:flex;align-items:center;gap:10px;padding:8px 0;"><input type="checkbox" id="zGotBuyer" checked style="width:auto;"> получил от покупателя в кассу</label>
+        <div class="fact-hint">Снятая галочка — деньги не прошли, долг висит.</div>
+      </div>
+      <div id="zBrokerBox" style="display:none;">
+        <div class="field"><label>Посредник</label>
+          <div class="ac-wrap"><input type="text" id="zBroker" value="Транзит" autocomplete="off" oninput="acInput('zBroker','zBrokerAc')" onfocus="acInput('zBroker','zBrokerAc')"><div class="ac-list" id="zBrokerAc"></div></div>
+          <div class="fact-hint">Через него проходит разница, чтобы маржа не попала в отчёт покупателя. Его баланс всегда 0.</div>
+        </div>
+      </div>
+
+      <div class="field"><label>Изоҳ</label><input type="text" id="zNote" placeholder="ихтиёрий"></div>
+      <div class="field"><label>Сана (бўш = бугун)</label><input type="date" id="zOpDate"></div>
+      <button class="submit" id="zSubmit" onclick="zSubmit()">Записать сделку</button>
+      <button class="submit" style="background:var(--card2);border:1px solid var(--line);color:var(--muted);margin-top:8px;" onclick="zReset()">Тозалаш</button>
+    </div>
+    <div class="card feed"><h2>Последние транзиты</h2><div id="zFeed"><div class="empty">—</div></div></div>
+  </div>
+
   <!-- ====== СДЕЛКИ (оператор 3) ====== -->
   <div class="screen hidden" id="scr-req">
     <div class="head"><div><h1 data-i18n="hReq">Сделки</h1><div class="op"><span data-i18n="operator">Оператор:</span> <span id="opNameR">…</span></div></div></div>
@@ -1272,6 +1328,7 @@
     executeAllRequests:{fn:'p_execute_all_requests', body:function(a,t){return {p_region:a.region,token:t};}},
     cancelOperation:   {fn:'p_cancel_operation', body:function(a,t){return {p_opid:a.opId,p_force:(a.force!==undefined?a.force:true),token:t};}},
     editOperation:     {fn:'p_edit_operation',   body:function(a,t){return {p_opid:a.opId,fields:a.fields,token:t};}},
+    saveTransit:       {fn:'p_save_transit',     body:function(a,t){return {payload:a.payload,token:t};}},
     changeOperationDate:{fn:'p_change_op_date',  body:function(a,t){return {p_opid:a.opId,p_newdate:a.newDate,p_newtime:(a.newTime||''),token:t};}}
   };
   // v35: предпросмотр остатка клиента — иконка-глаз ТОГГЛ рядом с именем.
@@ -1717,12 +1774,12 @@
   var DB=cGet('db')||[];
   ['opName','opNameU','opNameG','opNameR','opNameRep'].forEach(function(id){var e=document.getElementById(id); if(e)e.textContent=USER_NAME||'—';});
 
-  function TAB_LABELS_(){return {moscow:['М',t('tabMoscow')],uzb:['У',t('tabUzb')],region:['Р',t('tabRegion')],req:['С',t('tabReq')],transfer:['П',t('tabTransfer')],admin:['✎',t('tabAdmin')],reports:['О',t('tabReports')]};}
+  function TAB_LABELS_(){return {moscow:['М',t('tabMoscow')],uzb:['У',t('tabUzb')],region:['Р',t('tabRegion')],req:['С',t('tabReq')],transfer:['П',t('tabTransfer')],transit:['Т','Транзит'],admin:['✎',t('tabAdmin')],reports:['О',t('tabReports')]};}
   var TABS={
     operator1:['moscow'],
-    operator2:['moscow','uzb','region','reports'],
+    operator2:['moscow','uzb','region','transit','reports'],
     operator3:['req'],
-    admin:['moscow','uzb','region','reports','admin','transfer','req'],
+    admin:['moscow','uzb','region','transit','reports','admin','transfer','req'],
     report:['moscow','uzb','region','reports']
   };
   function buildTabs(){
@@ -1742,7 +1799,7 @@
     box.innerHTML=html; if(list.length) showScreen(list[0], list.length>1?box.querySelector('.tab[data-s='+list[0]+']'):null);
   }
   function showScreen(name,el){
-    ['moscow','uzb','region','req','transfer','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
+    ['moscow','uzb','region','req','transfer','transit','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
     var cl=document.getElementById('scr-client'); if(cl) cl.classList.add('hidden');
     var t=document.getElementById('scr-'+name); if(t)t.classList.remove('hidden');
     if(el){document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('sel');}); el.classList.add('sel');}
@@ -1754,7 +1811,160 @@
     if(name==='req'){bgDrop('req'); rRefresh();}
     if(name==='admin'){aLoadCancel();}
     if(name==='transfer'){tRefreshFeed();}
+    if(name==='transit'){zOpen();}
     if(name==='reports'){repInit();}
+  }
+
+
+  // ============================================================
+  //  ТРАНЗИТ — сквозная сделка одной формой
+  //
+  //  Деньги проходят мимо: купили у продавца и тут же продали покупателю.
+  //  Своего склада не тратим, остаётся маржа. Раньше это были четыре
+  //  строки руками; в августе таких сделок было пятьдесят, то есть двести
+  //  строк. Здесь одна форма и одна транзакция в базе: либо все строки,
+  //  либо ни одной.
+  //
+  //  Узбекистан идёт через отдельный склад-близнец. Причина не в деньгах,
+  //  а в том, что прогонный объём сдвигает средний курс настоящего склада,
+  //  а от него считается себестоимость ВСЕХ обычных продаж. У остальных
+  //  регионов склад обычно пуст, и ФИФО там равен марже до рубля.
+  // ============================================================
+  var zCurMode='cash';
+  function zHidden_(r){ return /транзит/i.test(String(r||'')); }
+
+  function zOpen(){
+    var e=document.getElementById('opNameT'); if(e) e.textContent=USER_NAME||'—';
+    var sel=document.getElementById('zRegion');
+    if(sel && !sel.options.length){
+      var list=['Узбекистан'].concat((gRegList||[]).filter(function(r){return !zHidden_(r);}));
+      sel.innerHTML=list.map(function(r){return '<option>'+esc(r)+'</option>';}).join('');
+    }
+    zMode(zCurMode);
+    zFeed();
+  }
+
+  function zMode(m){
+    zCurMode=m;
+    ['zmCash','zmBroker','zmNone'].forEach(function(id){var el=document.getElementById(id); if(el) el.classList.remove('sel');});
+    var cur={cash:'zmCash',broker:'zmBroker',none:'zmNone'}[m];
+    var el=document.getElementById(cur); if(el) el.classList.add('sel');
+    document.getElementById('zCashBox').style.display   = (m==='cash')   ? '' : 'none';
+    document.getElementById('zBrokerBox').style.display = (m==='broker') ? '' : 'none';
+  }
+
+  function zNum_(id){ var el=document.getElementById(id); if(!el) return 0;
+    var d=String(el.value||'').replace(/\D/g,''); return d?parseInt(d,10):0; }
+  function zRate_(id){ var el=document.getElementById(id); if(!el) return 0;
+    var v=parseFloat(String(el.value||'').replace(',','.')); return isFinite(v)?v:0; }
+
+  // Рубли главнее курса: в деньги идёт рубль. Правишь рубли — курс
+  // подстраивается под них, как в форме региона. Переучиваться не надо.
+  function zCalc(what){
+    var usd=zNum_('zUsd');
+    if(usd>0){
+      if(what==='U'||what==='RB'){ var rb=zRate_('zRateBuy');
+        if(rb>0) document.getElementById('zRubBuy').value=Math.round(usd*rb).toLocaleString('ru-RU'); }
+      if(what==='U'||what==='RS'){ var rs=zRate_('zRateSell');
+        if(rs>0) document.getElementById('zRubSell').value=Math.round(usd*rs).toLocaleString('ru-RU'); }
+      if(what==='BB'){ var b=zNum_('zRubBuy');
+        if(b>0) document.getElementById('zRateBuy').value=String(Math.round(b/usd*100)/100).replace('.',','); }
+      if(what==='BS'){ var sv=zNum_('zRubSell');
+        if(sv>0) document.getElementById('zRateSell').value=String(Math.round(sv/usd*100)/100).replace('.',','); }
+    }
+    zPreview();
+  }
+
+  // Прибыль показываем ДО сохранения. Если склад региона не пуст, ФИФО даёт
+  // не просто разницу курсов — и это надо видеть заранее, а не после записи.
+  var _zPrevT=null;
+  function zPreview(){
+    var box=document.getElementById('zCalcBox');
+    var usd=zNum_('zUsd'), rb=zNum_('zRubBuy'), rs=zNum_('zRubSell');
+    if(!(usd>0&&rb>0&&rs>0)){ box.textContent='Заполни сумму и оба курса — покажу маржу и прибыль.'; return; }
+    var marg=rs-rb;
+    box.innerHTML='Маржа: <b>'+fmt(marg)+' ₽</b>';
+    if(_zPrevT) clearTimeout(_zPrevT);
+    _zPrevT=setTimeout(function(){
+      fetch(SB_URL+'/rest/v1/rpc/p_transit_preview',{method:'POST',
+        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({payload:{region:document.getElementById('zRegion').value,
+          usd:String(usd),rubBuy:String(rb),rubSell:String(rs)}})})
+      .then(function(r){return r.json();}).then(function(p){
+        if(!p||!p.ok) return;
+        var h='Маржа: <b>'+fmt(marg)+' ₽</b>';
+        if(Math.round(p.profit)!==Math.round(marg)){
+          h+=' · прибыль по партиям: <b style="color:var(--gold)">'+fmt(Math.round(p.profit))+' ₽</b>'+
+             '<div style="margin-top:4px;color:var(--muted)">склад региона не пуст — ФИФО считает по партиям, а не по разнице курсов</div>';
+        }
+        box.innerHTML=h;
+      }).catch(function(){});
+    },350);
+  }
+
+  function zSubmit(){
+    if(!WRITE_TO_SB){ showModal(false,'ТРАНЗИТ',[['Сообщение','Транзит работает только в режиме Supabase. Переключи режим записи в админ-панели.']]); return; }
+    var usd=zNum_('zUsd'), rb=zNum_('zRubBuy'), rs=zNum_('zRubSell');
+    var seller=document.getElementById('zSeller').value.trim();
+    var buyer =document.getElementById('zBuyer').value.trim();
+    if(!seller||!buyer){ toast('Выбери продавца и покупателя',true); return; }
+    if(seller===buyer){ toast('Продавец и покупатель совпадают',true); return; }
+    if(!(usd>0)){ toast('Введи сумму $',true); return; }
+    if(!(rb>0&&rs>0)){ toast('Проверь курсы',true); return; }
+
+    var p={ region:document.getElementById('zRegion').value,
+            seller:seller, buyer:buyer, usd:String(usd),
+            rubBuy:String(rb), rubSell:String(rs),
+            mode:zCurMode, note:document.getElementById('zNote').value.trim(),
+            opDate:document.getElementById('zOpDate').value||'',
+            opId:'tz_'+Date.now()+'_'+Math.floor(Math.random()*1e6) };
+    if(zCurMode==='cash'){
+      p.paidSeller=document.getElementById('zPaidSeller').checked;
+      p.gotBuyer  =document.getElementById('zGotBuyer').checked;
+    }
+    if(zCurMode==='broker') p.broker=document.getElementById('zBroker').value.trim();
+
+    var rows=[['Регион',p.region],['Продавец',seller+' · '+fmt(rb)+' ₽'],['Покупатель',buyer+' · '+fmt(rs)+' ₽'],
+              ['Сумма',fmt(usd)+' $'],['Маржа',fmt(rs-rb)+' ₽'],
+              ['Расчёт',{cash:'через кассу',broker:'через посредника',none:'не рассчитано'}[zCurMode]]];
+    if(zCurMode==='cash'){
+      rows.push(['Выдал продавцу', p.paidSeller?'да':'НЕТ — долг висит']);
+      rows.push(['Получил от покупателя', p.gotBuyer?'да':'НЕТ — долг висит']);
+    }
+    showCheque('🔁 ТРАНЗИТ', fmt(usd)+' $', seller+' → '+buyer, rows, function(){ zDo(p); });
+  }
+
+  function zDo(p){
+    var btn=document.getElementById('zSubmit'); btn.disabled=true; btn.textContent='…';
+    apiCall('saveTransit',{payload:p},AUTH_TOKEN).then(function(r){
+      btn.disabled=false; btn.textContent='Записать сделку';
+      if(!r||!r.ok){ showModal(false,'НЕ ЗАПИСАНО',[['Сообщение',(r&&r.error)||'ошибка']]); return; }
+      var rows=[['Маржа',fmt(r.margin)+' ₽'],['Прибыль',fmt(Math.round(r.profit))+' ₽']];
+      if(r.cash) rows.push(['Касса', (r.cash>0?'+':'')+fmt(r.cash)+' ₽']);
+      if(r.twin && !r.skladOk) rows.push(['⚠️ Склад транзита', fmt(r.sklad)+' $ — должен быть 0']);
+      showModal(true,'ЗАПИСАНО',rows);
+      zReset(); _sbTs=0; zFeed();
+    }).catch(function(){ btn.disabled=false; btn.textContent='Записать сделку'; toast(t('connLost'),true); });
+  }
+
+  function zReset(){
+    ['zUsd','zRateBuy','zRubBuy','zRateSell','zRubSell','zSeller','zBuyer','zNote'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.value='';
+    });
+    document.getElementById('zCalcBox').textContent='Заполни сумму и оба курса — покажу маржу и прибыль.';
+  }
+
+  function zFeed(){
+    var box=document.getElementById('zFeed'); if(!box) return;
+    if(!_sbLive||!_sbLive.length){ box.innerHTML='<div class="empty">—</div>'; return; }
+    var rows=_sbLive.filter(function(r){ return String(r.id||'').indexOf('tz_')===0
+             && String(r.id||'').slice(-2)==='_b' && (r.status||'')!=='отменён'; }).slice(0,20);
+    if(!rows.length){ box.innerHTML='<div class="empty">Транзитов пока нет</div>'; return; }
+    box.innerHTML=rows.map(function(r){
+      return '<div class="op-item"><div class="op-left"><div class="nm">'+esc(r.name||'')+'</div>'+
+             '<div class="mt">'+_mskDay(r.dt)+' · '+esc(r.place||'')+'</div></div>'+
+             '<div class="op-amt gold">'+fmt(Math.round(Number(r.profit||0)))+' ₽</div></div>';
+    }).join('');
   }
 
   function moneyFormat(el){var d=el.value.replace(/\D/g,''); el.value=d?Number(d).toLocaleString('ru-RU'):'';}
@@ -1867,7 +2077,7 @@
     var cur = document.querySelector('.tab.sel');
     var name = cur ? cur.getAttribute('data-s') : null;
     if(!name){
-      var vis = ['moscow','uzb','region','req','transfer','admin','reports'].filter(function(s){
+      var vis = ['moscow','uzb','region','req','transfer','transit','admin','reports'].filter(function(s){
         var d=document.getElementById('scr-'+s); return d && !d.classList.contains('hidden');
       });
       name = vis[0] || 'moscow';
@@ -2595,7 +2805,7 @@
   function gSubmit(){REG.submit();}
   function gApplyCached(res){
     if(res.regions){
-      gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан';});
+      gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан' && !zHidden_(r);});
       gRenderRegionTabs();
     }
     var b=res.balance||{};
@@ -2637,7 +2847,7 @@
       if(res.region) cPut('reg_'+res.region,res);
       if(res.regions) cPut('reglist',res.regions);   // список для мгновенной отрисовки вкладок
       if(res.regions){
-        gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан';});
+        gRegList=(res.regions||[]).filter(function(r){return r!=='Узбекистан' && !zHidden_(r);});
         if(res.region) gCurRegion=res.region;
         gRenderRegionTabs();
         if(!gRegList.length){
@@ -2670,7 +2880,7 @@
     if(!gCurRegion){
       var lst=cGet('reglist');
       if(lst&&lst.length){
-        gRegList=lst.filter(function(r){return r!=='Узбекистан';});
+        gRegList=lst.filter(function(r){return r!=='Узбекистан' && !zHidden_(r);});
         for(var i=0;i<gRegList.length;i++){
           if(cGet('reg_'+gRegList[i])){ gCurRegion=gRegList[i]; break; }
         }
@@ -4291,7 +4501,7 @@
     document.getElementById('clPerAll').classList.add('sel');
     document.getElementById('clPerMonth').classList.remove('sel');
     document.getElementById('clPerRange').classList.remove('sel');
-    ['moscow','uzb','region','req','transfer','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
+    ['moscow','uzb','region','req','transfer','transit','admin','reports'].forEach(function(s){var d=document.getElementById('scr-'+s); if(d)d.classList.add('hidden');});
     document.getElementById('scr-client').classList.remove('hidden');
     clLoadOps();
     clKeyLoad();
@@ -4805,7 +5015,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 35.6;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
+  var APP_VERSION = 35.7;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
                           // телефон ждёт version.json БОЛЬШЕ своего номера,
                           // понижение навсегда убивает баннер обновления.
   (function(){
