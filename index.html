@@ -1939,7 +1939,7 @@
   }
 
   function zSubmit(){
-    if(!WRITE_TO_SB){ showModal(false,'ТРАНЗИТ',[['Сообщение','Транзит работает только в режиме Supabase. Переключи режим записи в админ-панели.']]); return; }
+    if(!WRITE_TO_SB){ toast('Транзит работает только в режиме Supabase — переключи режим записи в админ-панели',true); return; }
     var usd=zNum_('zUsd'), rb=zNum_('zRubBuy'), rs=zNum_('zRubSell');
     var seller=document.getElementById('zSeller').value.trim();
     var buyer =document.getElementById('zBuyer').value.trim();
@@ -1967,18 +1967,19 @@
       rows.push(['Выдал продавцу', p.paidSeller?'да':'НЕТ — долг висит']);
       rows.push(['Получил от покупателя', p.gotBuyer?'да':'НЕТ — долг висит']);
     }
-    showCheque('🔁 ТРАНЗИТ', fmt(usd)+' $', seller+' → '+buyer, rows, function(){ zDo(p); });
+    rows.unshift(['Транзит', fmt(usd)+' $', 'gold']);
+    showSummary(rows, function(){ zDo(p); });
   }
 
   function zDo(p){
     var btn=document.getElementById('zSubmit'); btn.disabled=true; btn.textContent='…';
     apiCall('saveTransit',{payload:p},AUTH_TOKEN).then(function(r){
       btn.disabled=false; btn.textContent='Записать сделку';
-      if(!r||!r.ok){ showModal(false,'НЕ ЗАПИСАНО',[['Сообщение',(r&&r.error)||'ошибка']]); return; }
-      var rows=[['Маржа',fmt(r.margin)+' ₽'],['Прибыль',fmt(Math.round(r.profit))+' ₽']];
-      if(r.cash) rows.push(['Касса', (r.cash>0?'+':'')+fmt(r.cash)+' ₽']);
-      if(r.twin && !r.skladOk) rows.push(['⚠️ Склад транзита', fmt(r.sklad)+' $ — должен быть 0']);
-      showModal(true,'ЗАПИСАНО',rows);
+      if(!r||!r.ok){ toast((r&&r.error)||'не записалось',true); return; }
+      var det='маржа '+fmt(r.margin)+' ₽';
+      if(r.cash) det+=' · касса '+(r.cash>0?'+':'')+fmt(r.cash)+' ₽';
+      showOk('Транзит записан', det);
+      if(r.twin && !r.skladOk) toast('Склад транзита '+fmt(r.sklad)+' $ — должен быть 0',true);
       zReset(); _sbTs=0; zFeed();
     }).catch(function(){ btn.disabled=false; btn.textContent='Записать сделку'; toast(t('connLost'),true); });
   }
@@ -5051,7 +5052,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 35.8;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
+  var APP_VERSION = 35.9;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
                           // телефон ждёт version.json БОЛЬШЕ своего номера,
                           // понижение навсегда убивает баннер обновления.
   (function(){
