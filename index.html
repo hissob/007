@@ -1441,6 +1441,18 @@
   // v34: архив закрытого месяца (самодостаточен: операции месяца + снимки me_ входящего остатка).
   // Кэш навсегда в памяти — закрытый месяц не меняется.
   var _sbArch={};
+  // v36.4: строки месяца — архив И живые операции этого месяца вместе.
+  // Прошлый месяц брался только из архива, а архив появляется лишь при
+  // закрытии. Пока месяц не закрыт, его операции живые — и история
+  // показывала «нет операций». Дублей не бывает: строка либо живая,
+  // либо в архиве, одновременно — никогда.
+  function sbMonthRows_(mk){
+    return Promise.all([sbFetchBase(), sbFetchMonth(mk)]).then(function(res){
+      var arch=res[1]||[];
+      var live=(_sbLive||[]).filter(function(r){ return _mskDay(r.dt).slice(0,7)===mk; });
+      return arch.concat(live);
+    });
+  }
   function sbFetchMonth(mk){
     if(_sbArch[mk]) return Promise.resolve(_sbArch[mk]);
     return sbGetAll('operations?src=eq.'+encodeURIComponent(mk)+'&select=name,place,action,rub,usd,rate,rub_itog,profit,status,executor,operator,note,dt,id&order=dt.asc,id.asc')
@@ -3495,10 +3507,45 @@
   var _ghRows=[];       // последние отфильтрованные строки (для перерисовки без сети)
   function ghChk_(id){ return (USER_ROLE==='admin')
     ? '<span class="gh-chk'+(_ghChecked[id]?' on':'')+'" onclick="event.stopPropagation();ghToggleCheck(\''+String(id).replace(/'/g,"")+'\')">✓</span>' : ''; }
+  // v36.4: поставить или снять отметку — именно поставить/снять, а не
+  // переключить. Сервер умеет только переключать, поэтому сначала смотрим,
+  // в каком состоянии отметка сейчас, и зовём его только если нужно.
+  function ghSetCheck_(id, want){
+    var has=!!_ghChecked[id]; if(has===want) return;
+    if(want) _ghChecked[id]=1; else delete _ghChecked[id];
+    sbRpc_('p_admin_check_toggle',{p_opid:id, token:AUTH_TOKEN}).then(function(r){
+      if(!r||!r.ok){ if(has)_ghChecked[id]=1; else delete _ghChecked[id]; chkRepaint_(); }
+    }).catch(function(){ if(has)_ghChecked[id]=1; else delete _ghChecked[id]; chkRepaint_(); });
+  }
+  // Последняя живая сделка клиента: не отменённая и не служебная строка
+  // закрытия месяца (me_) — те не сделки, а перенос остатка.
+  function ghLastOpId_(name){
+    var nm=String(name||'').trim(), mx='', id='';
+    if(_sbLive) for(var i=0;i<_sbLive.length;i++){
+      var r=_sbLive[i];
+      if((r.name||'').trim()!==nm) continue;
+      if((r.status||'').trim()==='отменён') continue;
+      var rid=String(r.id||''); if(!rid || rid.indexOf('me_')===0) continue;
+      var d=String(r.dt||'');
+      if(d>mx || (d===mx && rid>id)){ mx=d; id=rid; }
+    }
+    return id;
+  }
   function ghToggleCheck(id){
     if(USER_ROLE!=='admin') return;
     var was=!!_ghChecked[id];
     if(was) delete _ghChecked[id]; else _ghChecked[id]=1;   // оптимистично
+    // v36.4: отметил клиента — та же отметка ложится на его последнюю сделку.
+    // Галочка клиента гаснет при следующей операции (так задумано: она горит
+    // над остатком, который ты сверил). А галочка на сделке остаётся —
+    // и в истории клиента видно, на какой сделке всё сходилось в последний раз.
+    // Снял отметку клиента — снимается и с той же сделки: ошибочный тап
+    // отменяется целиком.
+    if(String(id).indexOf('cl:')===0){
+      var parts=String(id).slice(3).split('|'); parts.pop(); parts.pop();
+      var opId=ghLastOpId_(parts.join('|'));
+      if(opId) ghSetCheck_(opId, !was);
+    }
     chkRepaint_();
     sbRpc_('p_admin_check_toggle',{p_opid:id, token:AUTH_TOKEN}).then(function(r){
       if(!r||!r.ok){ if(was)_ghChecked[id]=1; else delete _ghChecked[id]; chkRepaint_(); toast((r&&r.error)||t('err'),true); }
@@ -5134,7 +5181,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 36.3;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
+  var APP_VERSION = 36.4;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
                           // телефон ждёт version.json БОЛЬШЕ своего номера,
                           // понижение навсегда убивает баннер обновления.
   (function(){
@@ -5258,7 +5305,7 @@
       return;
     }
     if(SB_ON){   // прошлый месяц — архив
-      sbFetchMonth(month).then(function(rows){
+      sbMonthRows_(month).then(function(rows){
         MO_DATA=sbComputeMonthly(place,month,rows); MO_DATA.source='archive'; cPut(ck,MO_DATA); moRender();
       }).catch(function(){ if(!c) box.innerHTML='<div class="empty">'+t('connLost')+'</div>'; });
       return;
@@ -5343,7 +5390,7 @@
     var fromK = (pv.charAt(0)==='m') ? (pv.slice(1)+'-01')
               : new Date(Date.now()-((parseInt(pv.slice(1),10)||10)-1)*864e5).toISOString().slice(0,10);
     if(SB_ON && pv.charAt(0)==='m' && pv.slice(1)<CUR_MONTH_()){   // закрытый месяц — архив
-      sbFetchMonth(pv.slice(1)).then(function(rows){
+      sbMonthRows_(pv.slice(1)).then(function(rows){
         var r=sbComputeTarih(place,period,rows); cPut(ck,r); thRender(r);
       }).catch(function(){ if(!c) box.innerHTML='<div class="empty">'+t('connLost')+'</div>'; });
       return;
@@ -5422,7 +5469,7 @@
       };
       var pErr=function(){ box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:6px 0;">'+t('connLost')+'</div>'; };
       if(mk===CUR_MONTH_()) sbFetchBase().then(function(){ renderSb(_sbLive); }).catch(pErr);
-      else sbFetchMonth(mk).then(renderSb).catch(pErr);
+      else sbMonthRows_(mk).then(renderSb).catch(pErr);
       return;
     }
     // v22: день текущего месяца уже лежит в снимке — рисуем и не спрашиваем

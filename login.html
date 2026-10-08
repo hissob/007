@@ -23,8 +23,17 @@
   input{width:100%;padding:14px 12px;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);font-size:16px;outline:none;}
   input:focus{border-color:var(--accent);}
   .btn{width:100%;padding:15px;background:var(--accent);color:#06210f;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;}
+  .btn:active{transform:scale(.98);}
   .btn:disabled{background:var(--line);color:var(--muted);}
-  .err{color:var(--minus);font-size:13px;text-align:center;margin-top:14px;min-height:18px;}
+  .err{color:var(--minus);font-size:14px;text-align:center;margin-top:14px;min-height:18px;}
+  /* экран ожидания — поверх всего, по центру, клавиатура убрана */
+  .ov{position:fixed;inset:0;background:rgba(15,17,21,.92);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99;}
+  .ov.on{display:flex;}
+  .spin{width:54px;height:54px;border:5px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;}
+  .ov.ok .spin{animation:none;border-color:var(--accent);}
+  .ovt{margin-top:18px;font-size:20px;font-weight:700;}
+  .ovs{margin-top:6px;font-size:13px;color:var(--muted);min-height:16px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -38,12 +47,30 @@
   </form>
   <div class="err" id="err"></div>
 </div>
+<div class="ov" id="ov"><div class="spin"></div><div class="ovt" id="ovt">Проверяю…</div><div class="ovs" id="ovs"></div></div>
 <script>
   var API_URL='https://script.google.com/macros/s/AKfycbw9xLU2d0_38dbVl2v7afk2CKn0JaJcVbPICYFtqJzYEBUbuxVPICqf5P-71Pn2KGRGCA/exec';
-  function apiCall(action,args,token){
+  var _busy=false;
+
+  // один запрос с ограничением 25 с
+  function apiOnce_(action,args){
+    var ctl=(typeof AbortController!=='undefined')?new AbortController():null;
+    var t=ctl?setTimeout(function(){ ctl.abort(); },25000):null;
     return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:action,token:token||'',args:args||{}})}).then(function(r){return r.json();});
+      body:JSON.stringify({action:action,token:'',args:args||{}}),signal:ctl?ctl.signal:undefined})
+      .then(function(r){ if(t) clearTimeout(t); return r.json(); },
+            function(e){ if(t) clearTimeout(t); throw e; });
   }
+  // при обрыве связи — ещё одна попытка через 1,2 с (неверный пароль не повторяем)
+  function apiCall(action,args){
+    return apiOnce_(action,args).catch(function(){
+      ovSet_('Проверяю…','Повторная попытка…');
+      return new Promise(function(ok){ setTimeout(ok,1200); }).then(function(){ return apiOnce_(action,args); });
+    });
+  }
+
+  function ovSet_(t,s){ document.getElementById('ovt').textContent=t; document.getElementById('ovs').textContent=s||''; }
+  function ovShow_(on){ document.getElementById('ov').className='ov'+(on?' on':''); }
 
   // если уже залогинен — сразу в приложение
   if(localStorage.getItem('kassa_token')){ location.href='index.html'; }
@@ -54,24 +81,33 @@
   document.getElementById('pass').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); doLogin(); } });
 
   function doLogin(){
+    if(_busy) return;                       // второй тап / Enter — игнор
     var login=document.getElementById('login').value.trim();
     var pass=document.getElementById('pass').value.trim();
     var err=document.getElementById('err'); err.textContent='';
     if(!login||!pass){ err.textContent='Введите логин и пароль'; return; }
-    var btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='Вход…';
-    apiCall('checkLogin',{login:login,password:pass},'').then(function(res){
+    _busy=true;
+    document.getElementById('login').blur(); document.getElementById('pass').blur();   // убрать клавиатуру
+    var btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='Проверяю…';
+    ovSet_('Проверяю…',''); ovShow_(true);
+    function fail(msg){
+      _busy=false; ovShow_(false);
+      btn.disabled=false; btn.textContent='Войти';
+      err.textContent=msg;
+    }
+    apiCall('checkLogin',{login:login,password:pass}).then(function(res){
       if(res&&res.ok){
         localStorage.setItem('kassa_token',res.token);
         localStorage.setItem('kassa_role',res.role||'');
         localStorage.setItem('kassa_name',res.name||'');
+        document.getElementById('ov').className='ov on ok';
+        ovSet_('Вход выполнен ✓','Открываю кассу…');
         location.href='index.html';
       } else {
-        btn.disabled=false; btn.textContent='Войти';
-        err.textContent=(res&&res.error)||'Ошибка';
+        fail((res&&res.error)||'Ошибка входа');
       }
     }).catch(function(){
-      btn.disabled=false; btn.textContent='Войти';
-      err.textContent='Связь потеряна';
+      fail('Нет связи. Проверьте интернет и нажмите «Войти» ещё раз');
     });
   }
 </script>
