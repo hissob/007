@@ -441,10 +441,10 @@
       </div>
       <div class="row2">
         <div class="field"><label>Продавец (у кого купили)</label>
-          <div class="ac-wrap"><input type="text" id="zSeller" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('zSeller','zSellerAc')" onfocus="acInput('zSeller','zSellerAc')"><div class="ac-list" id="zSellerAc"></div></div>
+          <div class="ac-wrap"><input type="text" id="zSeller" value="Нахт" placeholder="имя клиента" autocomplete="off" oninput="acInput('zSeller','zSellerAc')" onfocus="acInput('zSeller','zSellerAc')"><div class="ac-list" id="zSellerAc"></div></div>
         </div>
         <div class="field"><label>Покупатель (кому продали)</label>
-          <div class="ac-wrap"><input type="text" id="zBuyer" placeholder="1-2 ҳарф..." autocomplete="off" oninput="acInput('zBuyer','zBuyerAc')" onfocus="acInput('zBuyer','zBuyerAc')"><div class="ac-list" id="zBuyerAc"></div></div>
+          <div class="ac-wrap"><input type="text" id="zBuyer" value="Нахт" placeholder="имя клиента" autocomplete="off" oninput="acInput('zBuyer','zBuyerAc')" onfocus="acInput('zBuyer','zBuyerAc')"><div class="ac-list" id="zBuyerAc"></div></div>
         </div>
       </div>
       <div class="field"><label>Сумма $</label><input type="text" id="zUsd" class="money" placeholder="0" inputmode="numeric" oninput="zCalc('U')"></div>
@@ -477,10 +477,10 @@
         </div>
       </div>
 
-      <div class="field"><label>Изоҳ</label><input type="text" id="zNote" placeholder="ихтиёрий"></div>
-      <div class="field"><label>Сана (бўш = бугун)</label><input type="date" id="zOpDate"></div>
+      <div class="field"><label>Комментарий</label><input type="text" id="zNote" placeholder="необязательно"></div>
+      <div class="field"><label>Дата (пусто = сегодня)</label><input type="date" id="zOpDate"></div>
       <button class="submit" id="zSubmit" onclick="zSubmit()">Записать сделку</button>
-      <button class="submit" style="background:var(--card2);border:1px solid var(--line);color:var(--muted);margin-top:8px;" onclick="zReset()">Тозалаш</button>
+      <button class="submit" style="background:var(--card2);border:1px solid var(--line);color:var(--muted);margin-top:8px;" onclick="zReset()">Очистить</button>
     </div>
     <div class="card feed"><h2>Последние транзиты</h2><div id="zFeed"><div class="empty">—</div></div></div>
   </div>
@@ -1877,7 +1877,7 @@
       }
     }
     zMode(zCurMode);
-    zFeed();
+    sbFetchBase().then(zFeed).catch(function(){ zFeed(); });
   }
 
   function zMode(m){
@@ -1982,29 +1982,106 @@
       if(r.cash) det+=' · касса '+(r.cash>0?'+':'')+fmt(r.cash)+' ₽';
       showOk('Транзит записан', det);
       if(r.twin && !r.skladOk) toast('Склад транзита '+fmt(r.sklad)+' $ — должен быть 0',true);
-      zReset(); _sbTs=0; zFeed();
+      // лента обновляется ТОЛЬКО после перезагрузки данных: иначе рисуем
+      // старый список, и свежей сделки в нём нет — отсюда «записалось или нет»
+      zReset(); _sbTs=0; sbFetchBase().then(zFeed).catch(function(){});
     }).catch(function(){ btn.disabled=false; btn.textContent='Записать сделку'; toast(t('connLost'),true); });
   }
 
   function zReset(){
-    ['zUsd','zRateBuy','zRubBuy','zRateSell','zRubSell','zSeller','zBuyer','zNote'].forEach(function(id){
+    ['zUsd','zRateBuy','zRubBuy','zRateSell','zRubSell','zNote'].forEach(function(id){
       var e=document.getElementById(id); if(e) e.value='';
     });
+    // Продавец и покупатель по умолчанию — «Нахт»: большинство транзитов идут
+    // через него. Поменять можно в любой момент, после записи вернётся «Нахт».
+    var zs=document.getElementById('zSeller'), zb=document.getElementById('zBuyer');
+    if(zs) zs.value='Нахт'; if(zb) zb.value='Нахт';
     document.getElementById('zCalcBox').textContent='Заполни сумму и оба курса — покажу маржу и прибыль.';
   }
 
+  // Лента транзитов. Сделка — это пара строк (_a закупка у продавца,
+  // _b продажа покупателю) плюс ноги расчёта. Показывали только _b, то есть
+  // половину: имя покупателя и прибыль. Теперь собираем целиком.
+  //
+  // Показываем ВЕСЬ текущий месяц, а не двадцать последних: сделки пропадали
+  // из вида, и было непонятно, записались они или нет.
+  function zDeals_(){
+    if(!_sbLive||!_sbLive.length) return [];
+    var by={};
+    _sbLive.forEach(function(r){
+      var id=String(r.id||''); if(id.indexOf('tz_')!==0) return;
+      if((r.status||'')==='отменён') return;
+      var u=id.lastIndexOf('_'); if(u<0) return;
+      var base=id.slice(0,u), tail=id.slice(u+1);
+      if(!by[base]) by[base]={base:base, parts:{}};
+      by[base].parts[tail]=r;
+    });
+    var out=[];
+    for(var k in by){
+      var d=by[k], a=d.parts['a'], b=d.parts['b'];
+      if(!a||!b) continue;                       // половина пары — не показываем
+      var cash = !!(d.parts['c']&&String(d.parts['c'].place||'')==='Москва') ||
+                 !!(d.parts['d']&&String(d.parts['d'].place||'')==='Москва');
+      var broker = !!d.parts['g'];
+      out.push({
+        base:d.base, dt:a.dt, place:a.place||'',
+        seller:a.name||'', buyer:b.name||'',
+        usd:Math.abs(Number(a.usd||0)),
+        rateBuy:Number(a.rate||0), rateSell:Number(b.rate||0),
+        rubBuy:Math.abs(Number(a.rub_itog||0)), rubSell:Math.abs(Number(b.rub_itog||0)),
+        profit:Number(b.profit||0),
+        mode: broker?'посредник':(cash?'через кассу':'не рассчитано'),
+        parts:d.parts
+      });
+    }
+    out.sort(function(x,y){ return String(y.dt).localeCompare(String(x.dt)); });
+    return out;
+  }
+
+  function zRate_(v){ return (Math.round(Number(v||0)*100)/100).toFixed(2).replace('.',','); }
+
   function zFeed(){
     var box=document.getElementById('zFeed'); if(!box) return;
-    if(!_sbLive||!_sbLive.length){ box.innerHTML='<div class="empty">—</div>'; return; }
-    var rows=_sbLive.filter(function(r){ return String(r.id||'').indexOf('tz_')===0
-             && String(r.id||'').slice(-2)==='_b' && (r.status||'')!=='отменён'; }).slice(0,20);
-    if(!rows.length){ box.innerHTML='<div class="empty">Транзитов пока нет</div>'; return; }
-    box.innerHTML=rows.map(function(r){
-      return '<div class="op-item"><div class="op-left"><div class="nm">'+esc(r.name||'')+'</div>'+
-             '<div class="mt">'+_mskDay(r.dt)+' · '+esc(r.place||'')+'</div></div>'+
-             '<div class="op-amt gold">'+fmt(Math.round(Number(r.profit||0)))+' ₽</div></div>';
-    }).join('');
+    var ds=zDeals_();
+    if(!ds.length){ box.innerHTML='<div class="empty">Транзитов в этом месяце нет</div>'; return; }
+    box.innerHTML='<div class="mut" style="margin-bottom:8px">Сделок за месяц: '+ds.length+'</div>'+
+      ds.map(function(d,i){
+        var marg=d.rubSell-d.rubBuy;
+        var tapS=feedClick(d.seller,'transit'), tapB=feedClick(d.buyer,'transit');
+        return '<div class="op-item" style="flex-wrap:wrap;cursor:pointer" onclick="zToggle(this)">'+
+          '<div class="op-left">'+
+            '<div class="nm"><span'+tapS+'>'+esc(d.seller)+'</span> <span style="color:var(--muted)">→</span> <span'+tapB+'>'+esc(d.buyer)+'</span></div>'+
+            '<div class="mt">'+_mskDay(d.dt).slice(8,10)+'.'+_mskDay(d.dt).slice(5,7)+' · '+fmt(d.usd)+' $ · '+zRate_(d.rateBuy)+' → '+zRate_(d.rateSell)+'</div>'+
+            '<div class="mt" style="color:var(--muted)">'+esc(d.place)+' · '+d.mode+'</div>'+
+          '</div>'+
+          '<div class="op-amt gold">'+fmt(Math.round(d.profit||marg))+' ₽</div>'+
+          '<div class="z-det hidden" style="flex-basis:100%;font-size:12px;color:var(--muted);padding-top:8px;line-height:1.6">'+
+            'Закупка у '+esc(d.seller)+': '+fmt(d.rubBuy)+' ₽ по '+zRate_(d.rateBuy)+'<br>'+
+            'Продажа '+esc(d.buyer)+': '+fmt(d.rubSell)+' ₽ по '+zRate_(d.rateSell)+'<br>'+
+            'Маржа: '+fmt(marg)+' ₽'+(Math.round(d.profit)!==Math.round(marg)?' · прибыль по партиям '+fmt(Math.round(d.profit))+' ₽':'')+'<br>'+
+            zLegs_(d)+
+          '</div>'+
+        '</div>';
+      }).join('');
   }
+
+  // Что произошло с деньгами: прошли через кассу, через посредника или висят
+  function zLegs_(d){
+    var p=d.parts, out=[];
+    if(p['g']) {
+      out.push('Через посредника '+esc(p['g'].name||'')+' · маржа в кассу '+fmt(Math.abs(Number(p['g'].rub_itog||0)))+' ₽');
+    } else {
+      out.push(p['c']&&String(p['c'].place||'')==='Москва'
+        ? 'Продавцу выдано из кассы: '+fmt(Math.abs(Number(p['c'].rub_itog||0)))+' ₽'
+        : 'Продавцу НЕ выдано — долг висит');
+      out.push(p['d']&&String(p['d'].place||'')==='Москва'
+        ? 'От покупателя получено: '+fmt(Math.abs(Number(p['d'].rub_itog||0)))+' ₽'
+        : 'От покупателя НЕ получено — долг висит');
+    }
+    return out.join('<br>');
+  }
+
+  function zToggle(el){ var b=el.querySelector('.z-det'); if(b) b.classList.toggle('hidden'); }
 
   function moneyFormat(el){var d=el.value.replace(/\D/g,''); el.value=d?Number(d).toLocaleString('ru-RU'):'';}
   function moneyVal(id){var el=document.getElementById(id); if(!el)return 0; var d=el.value.replace(/\D/g,''); return d?parseInt(d,10):0;}
@@ -5054,7 +5131,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 36.0;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
+  var APP_VERSION = 36.2;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
                           // телефон ждёт version.json БОЛЬШЕ своего номера,
                           // понижение навсегда убивает баннер обновления.
   (function(){
