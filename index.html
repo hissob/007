@@ -2038,7 +2038,10 @@
     return out;
   }
 
-  function zRate_(v){ return (Math.round(Number(v||0)*100)/100).toFixed(2).replace('.',','); }
+  // Форматтер курса для ленты. Назывался zRate_ — так же, как разбор курса
+  // из поля формы выше. Второе объявление молча затирало первое, и рубли
+  // перестали считаться: zRate_('zRateBuy') возвращал строку «0,00».
+  function zRateFmt_(v){ return (Math.round(Number(v||0)*100)/100).toFixed(2).replace('.',','); }
 
   function zFeed(){
     var box=document.getElementById('zFeed'); if(!box) return;
@@ -2051,13 +2054,13 @@
         return '<div class="op-item" style="flex-wrap:wrap;cursor:pointer" onclick="zToggle(this)">'+
           '<div class="op-left">'+
             '<div class="nm"><span'+tapS+'>'+esc(d.seller)+'</span> <span style="color:var(--muted)">→</span> <span'+tapB+'>'+esc(d.buyer)+'</span></div>'+
-            '<div class="mt">'+_mskDay(d.dt).slice(8,10)+'.'+_mskDay(d.dt).slice(5,7)+' · '+fmt(d.usd)+' $ · '+zRate_(d.rateBuy)+' → '+zRate_(d.rateSell)+'</div>'+
+            '<div class="mt">'+_mskDay(d.dt).slice(8,10)+'.'+_mskDay(d.dt).slice(5,7)+' · '+fmt(d.usd)+' $ · '+zRateFmt_(d.rateBuy)+' → '+zRateFmt_(d.rateSell)+'</div>'+
             '<div class="mt" style="color:var(--muted)">'+esc(d.place)+' · '+d.mode+'</div>'+
           '</div>'+
           '<div class="op-amt gold">'+fmt(Math.round(d.profit||marg))+' ₽</div>'+
           '<div class="z-det hidden" style="flex-basis:100%;font-size:12px;color:var(--muted);padding-top:8px;line-height:1.6">'+
-            'Закупка у '+esc(d.seller)+': '+fmt(d.rubBuy)+' ₽ по '+zRate_(d.rateBuy)+'<br>'+
-            'Продажа '+esc(d.buyer)+': '+fmt(d.rubSell)+' ₽ по '+zRate_(d.rateSell)+'<br>'+
+            'Закупка у '+esc(d.seller)+': '+fmt(d.rubBuy)+' ₽ по '+zRateFmt_(d.rateBuy)+'<br>'+
+            'Продажа '+esc(d.buyer)+': '+fmt(d.rubSell)+' ₽ по '+zRateFmt_(d.rateSell)+'<br>'+
             'Маржа: '+fmt(marg)+' ₽'+(Math.round(d.profit)!==Math.round(marg)?' · прибыль по партиям '+fmt(Math.round(d.profit))+' ₽':'')+'<br>'+
             zLegs_(d)+
           '</div>'+
@@ -5131,7 +5134,7 @@
   }
 
   /* ===== ВЕРСИЯ ПРИЛОЖЕНИЯ + ПЛАШКА ОБНОВЛЕНИЯ ===== */
-  var APP_VERSION = 36.2;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
+  var APP_VERSION = 36.3;   // ← поднимать ВМЕСТЕ с version.json. ТОЛЬКО ВВЕРХ:
                           // телефон ждёт version.json БОЛЬШЕ своего номера,
                           // понижение навсегда убивает баннер обновления.
   (function(){
